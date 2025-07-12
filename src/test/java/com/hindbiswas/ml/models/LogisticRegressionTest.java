@@ -1,4 +1,4 @@
-package com.hindbiswas.ml;
+package com.hindbiswas.ml.models;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import org.ejml.simple.SimpleMatrix;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import com.hindbiswas.ml.models.LogisticRegression;
 
 class LogisticRegressionTest {
     private LogisticRegression model;
@@ -68,7 +66,7 @@ class LogisticRegressionTest {
         model.fit(xs, ys);
 
         // theta[1] should be positive and theta[0] negative roughly
-        SimpleMatrix theta = model.gettheta();
+        SimpleMatrix theta = model.getTheta();
         assertTrue(theta.get(1, 0) > 0);
         assertTrue(theta.get(0, 0) < 0);
 

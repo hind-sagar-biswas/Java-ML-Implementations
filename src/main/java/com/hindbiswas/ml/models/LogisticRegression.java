@@ -86,7 +86,7 @@ public class LogisticRegression {
         return p >= 0.5 ? 1 : 0;
     }
 
-    public SimpleMatrix gettheta() {
+    public SimpleMatrix getTheta() {
         if (theta == null) {
             throw new IllegalStateException("Model has not been fitted yet.");
         }
@@ -95,6 +95,17 @@ public class LogisticRegression {
     }
 
     public String toString() {
-        return "LinearRegression [y = " + theta + "]";
+        if (theta == null) {
+            return "LogisticRegression (unfitted model)";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("LogisticRegression [y = ");
+        sb.append(String.format("%.4f", theta.get(0, 0)));
+        for (int i = 1; i < theta.getNumRows(); i++) {
+            sb.append(" + ").append(String.format("%.4f", theta.get(i, 0))).append("*x").append(i);
+        }
+        sb.append("]");
+        return sb.toString();
+
     }
 }
