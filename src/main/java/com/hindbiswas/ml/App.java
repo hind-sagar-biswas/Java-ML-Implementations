@@ -1,10 +1,12 @@
 package com.hindbiswas.ml;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.io.IOException;
+import java.util.Map;
 
-import com.hindbiswas.ml.models.LinearRegression;
-import com.hindbiswas.ml.models.LinearRegressionMultiVar;
+import com.hindbiswas.ml.data.Dataset;
+import com.hindbiswas.ml.data.IrisDataLoader;
+import com.hindbiswas.ml.models.Perceptron;
+import com.opencsv.exceptions.CsvValidationException;
 
 /**
  * Hello world!
@@ -12,37 +14,25 @@ import com.hindbiswas.ml.models.LinearRegressionMultiVar;
  */
 public class App {
     public static void main(String[] args) {
-        LinearRegressionMultiVar model = LinearRegression.multi();
-        ArrayList<ArrayList<Double>> dataX = new ArrayList<>();
-        ArrayList<Double> dataY = new ArrayList<>();
+        String csv = "/home/shinigami/Downloads/iris.csv";
 
-        double[][] xs = {
-                { 5, 7, 10 },
-                { 7, 8, 9 },
-                { 8, 7, 6 },
-                { 7, 2, 9 },
-                { 2, 17, 4 },
-                { 17, 2, 11 },
-                { 2, 9, 12 },
-                { 9, 6, 9 },
-                { 6, 4, 4 },
-                { 4, 11, 78 },
-                { 11, 12, 77 },
-                { 12, 9, 85 },
-                { 9, 6, 86 }
-        };
-        double[] ys = { 99, 86, 87, 88, 111, 86, 103, 87, 94, 78, 77, 85, 86 };
-        for (int i = 0; i < xs.length; i++) {
-            ArrayList<Double> x = new ArrayList<>();
-            for (int j = 0; j < xs[i].length; j++) {
-                x.add(xs[i][j]);
-            }
-            dataX.add(x);
-            dataY.add(ys[i]);
+        Map<String, Dataset> data;
+
+        try {
+            data = IrisDataLoader.loadAndSplit(csv, 42L, "setosa", "versicolor");
+        } catch (CsvValidationException | IOException e) {
+            e.printStackTrace();
+            return;
         }
 
-        model.fit(dataX, dataY);
+        Dataset train = data.get("train");
+        Dataset test = data.get("test");
 
-        System.out.println(model);
+        Perceptron model = new Perceptron().shuffle(true).randomizeWeights(42);
+
+        model.fit(train.X, train.y);
+
+        System.out.println("Train accuracy: " + model.score(train.X, train.y));
+        System.out.println("Test  accuracy: " + model.score(test.X, test.y));
     }
 }
