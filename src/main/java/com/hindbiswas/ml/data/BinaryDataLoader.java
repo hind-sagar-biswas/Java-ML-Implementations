@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * Utility to load Iris CSV and split into train/test sets.
  */
-public class IrisDataLoader {
+public class BinaryDataLoader {
     public static Map<String, Dataset> loadAndSplit(String csvPath, long seed, String label1, String label2)
             throws IOException, CsvValidationException {
 
@@ -31,8 +31,8 @@ public class IrisDataLoader {
         List<String[]> trainRows = rows.subList(0, splitIndex);
         List<String[]> testRows = rows.subList(splitIndex, rows.size());
 
-        Dataset train = toDataset(trainRows);
-        Dataset test = toDataset(testRows);
+        Dataset train = toDataset(trainRows, label1);
+        Dataset test = toDataset(testRows, label1);
 
         Map<String, Dataset> map = new HashMap<>();
         map.put("train", train);
@@ -40,7 +40,7 @@ public class IrisDataLoader {
         return map;
     }
 
-    private static Dataset toDataset(List<String[]> rows) {
+    private static Dataset toDataset(List<String[]> rows, String label1) {
         ArrayList<ArrayList<Double>> X = new ArrayList<>();
         ArrayList<Double> y = new ArrayList<>();
 
@@ -54,7 +54,7 @@ public class IrisDataLoader {
 
             // Encode last column as label
             String rawLabel = r[r.length - 1];
-            double label = rawLabel.equals("Iris-setosa") ? -1.0 : 1.0;
+            double label = rawLabel.equals(label1) ? -1.0 : 1.0;
             y.add(label);
         }
 
