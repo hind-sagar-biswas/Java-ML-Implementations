@@ -24,7 +24,7 @@ public class LinearRegressionOLS {
      * @return This model instance, for chaining.
      * @throws IllegalArgumentException if sizes differ or lists are empty.
      */
-    public LinearRegressionOLS fit(ArrayList<Double> dataX, ArrayList<Double> dataY) {
+    public LinearRegressionOLS fit(ArrayList<Double> dataX, ArrayList<Double> dataY) throws IllegalArgumentException {
         if (dataX == null || dataY == null || dataX.size() != dataY.size() || dataX.isEmpty()) {
             throw new IllegalArgumentException("Data lists must be non-null, of the same non-zero length.");
         }
@@ -46,7 +46,7 @@ public class LinearRegressionOLS {
      * @return predicted y
      * @throws IllegalStateException if fit() has not been called.
      */
-    public Double predict(Double x) {
+    public Double predict(Double x) throws IllegalStateException {
         if (slope == null || intercept == null) {
             throw new IllegalStateException("Model has not been fitted yet.");
         }

@@ -30,7 +30,7 @@ public class LinearRegressionGD {
      * @param iterations   number of gradient descent iterations (must be > 0)
      * @throws IllegalArgumentException if learningRate &le; 0 or iterations &le; 0
      */
-    public LinearRegressionGD(Double learningRate, Integer iterations) {
+    public LinearRegressionGD(Double learningRate, Integer iterations) throws IllegalArgumentException {
         if (learningRate == null || learningRate <= 0) {
             throw new IllegalArgumentException("learningRate must be > 0");
         }
@@ -51,7 +51,8 @@ public class LinearRegressionGD {
      * @throws IllegalArgumentException if inputs are null, lengths mismatch, or no
      *                                  features
      */
-    public LinearRegressionGD fit(ArrayList<ArrayList<Double>> dataX, ArrayList<Double> dataY) {
+    public LinearRegressionGD fit(ArrayList<ArrayList<Double>> dataX, ArrayList<Double> dataY)
+            throws IllegalArgumentException {
         Objects.requireNonNull(dataX, "dataX cannot be null");
         Objects.requireNonNull(dataY, "dataY cannot be null");
         if (dataX.size() != dataY.size() || dataX.isEmpty()) {

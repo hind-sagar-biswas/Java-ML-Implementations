@@ -20,7 +20,8 @@ public class LinearRegressionMultiVar {
      * @return This model instance, for chaining.
      * @throws IllegalArgumentException if sizes differ or inputs are empty.
      */
-    public LinearRegressionMultiVar fit(ArrayList<ArrayList<Double>> dataX, ArrayList<Double> dataY) {
+    public LinearRegressionMultiVar fit(ArrayList<ArrayList<Double>> dataX, ArrayList<Double> dataY)
+            throws IllegalArgumentException {
         if (dataX == null || dataY == null || dataX.size() != dataY.size() || dataX.isEmpty()) {
             throw new IllegalArgumentException("Data lists must be non-null, of the same non-zero length.");
         }
@@ -61,7 +62,7 @@ public class LinearRegressionMultiVar {
      * @throws IllegalStateException    if fit() has not been called
      * @throws IllegalArgumentException if xFeatures size does not match model
      */
-    public Double predict(ArrayList<Double> xFeatures) {
+    public Double predict(ArrayList<Double> xFeatures) throws IllegalArgumentException, IllegalStateException {
         if (theta == null) {
             throw new IllegalStateException("Model has not been fitted yet.");
         }
@@ -88,7 +89,7 @@ public class LinearRegressionMultiVar {
      * @return theta
      * @throws IllegalStateException if model unfitted.
      */
-    public SimpleMatrix getTheta() {
+    public SimpleMatrix getTheta() throws IllegalStateException {
         if (theta == null) {
             throw new IllegalStateException("Model has not been fitted yet.");
         }

@@ -141,7 +141,7 @@ public class LogisticRegression {
      * @return parameter vector including intercept term
      * @throws IllegalStateException if model has not been fitted
      */
-    public SimpleMatrix getTheta() {
+    public SimpleMatrix getTheta() throws IllegalStateException {
         if (theta == null) {
             throw new IllegalStateException("Model has not been fitted yet.");
         }
