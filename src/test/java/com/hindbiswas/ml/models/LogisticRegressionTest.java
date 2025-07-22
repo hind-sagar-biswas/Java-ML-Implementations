@@ -48,7 +48,7 @@ class LogisticRegressionTest {
     void testPredictBeforeFitThrows() {
         ArrayList<Double> x = new ArrayList<>();
         x.add(1.0);
-        assertThrows(IllegalStateException.class, () -> model.predict(x));
+        assertThrows(IllegalStateException.class, () -> model.classify(x));
     }
 
     @Test
@@ -75,7 +75,7 @@ class LogisticRegressionTest {
         testLow.add(0.2);
         ArrayList<Double> testHigh = new ArrayList<>();
         testHigh.add(0.8);
-        assertEquals(0, model.predict(testLow));
-        assertEquals(1, model.predict(testHigh));
+        assertEquals(0, model.classify(testLow));
+        assertEquals(1, model.classify(testHigh));
     }
 }

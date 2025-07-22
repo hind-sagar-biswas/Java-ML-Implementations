@@ -68,7 +68,7 @@ public class LogisticRegression {
         return this;
     }
 
-    public Integer predict(ArrayList<Double> x) {
+    public Double predict(ArrayList<Double> x) throws IllegalStateException {
         if (theta == null) {
             throw new IllegalStateException("Model has not been fitted yet.");
         }
@@ -82,6 +82,12 @@ public class LogisticRegression {
         SimpleMatrix xMatrix = new SimpleMatrix(1, xArray.length, true, xArray);
         double z = xMatrix.mult(theta).get(0, 0);
         double p = sigmoid(z);
+
+        return p;
+    }
+
+    public Integer classify(ArrayList<Double> x) throws IllegalStateException {
+        double p = predict(x);
 
         return p >= 0.5 ? 1 : 0;
     }
