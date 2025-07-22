@@ -8,6 +8,7 @@ A lightweight Java library implementing common Machine Learning models using cor
 * **Linear Regression (Batch Gradient Descent)** (`LinearRegressionGD`)
 * **Multivariate Linear Regression (OLS)** (`LinearRegressionMultiVar`)
 * **Logistic Regression (Gradient Descent)** (`LogisticRegression`)
+* **Perceptron** (`Perceptron`)
 
 ## Installation
 
