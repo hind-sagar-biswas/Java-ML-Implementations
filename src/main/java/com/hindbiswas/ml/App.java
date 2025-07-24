@@ -5,7 +5,9 @@ import java.util.Map;
 
 import com.hindbiswas.ml.data.BinaryDataLoader;
 import com.hindbiswas.ml.data.Dataset;
+import com.hindbiswas.ml.models.MultiLayerPerceptron;
 import com.hindbiswas.ml.models.Perceptron;
+import com.hindbiswas.ml.util.Activations;
 import com.opencsv.exceptions.CsvValidationException;
 
 /**
@@ -14,6 +16,14 @@ import com.opencsv.exceptions.CsvValidationException;
  */
 public class App {
     public static void main(String[] args) {
+        MultiLayerPerceptron mlp = new MultiLayerPerceptron(784, 2, 10);
+        mlp.layer(256, Activations.sigmoid());
+        mlp.layer(128, Activations.sigmoid());
+        mlp.layer(10, Activations.softmax());
+        mlp.configure(10, 2000, 0.2);
+    }
+
+    public static void perceptron() {
         String csv = "/home/shinigami/Downloads/iris.csv";
 
         Map<String, Dataset> data;

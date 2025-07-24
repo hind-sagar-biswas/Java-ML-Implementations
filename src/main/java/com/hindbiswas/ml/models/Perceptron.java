@@ -186,7 +186,7 @@ public class Perceptron {
 
                 // raw activation
                 double raw = theta.transpose().mult(inputs).get(0, 0);
-                int prediction = activation.apply(raw);
+                int prediction = (int) activation.apply(raw);
                 double error = (expected - prediction) * learningRate;
                 theta = theta.plus(inputs.scale(error));
 
@@ -232,7 +232,7 @@ public class Perceptron {
         SimpleMatrix xMatrix = Matrix.row(x);
         double p = xMatrix.mult(theta).get(0, 0);
 
-        return activation.apply(p);
+        return (int) activation.apply(p);
     }
 
     /**

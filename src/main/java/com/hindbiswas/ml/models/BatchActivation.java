@@ -1,15 +1,17 @@
 package com.hindbiswas.ml.models;
 
+import org.ejml.simple.SimpleMatrix;
+
 /**
  * Functional interface for activation functions.
  */
 @FunctionalInterface
-public interface Activation {
+public interface BatchActivation {
     /**
      * Applies the activation function to a raw value.
      * 
      * @param x raw input
      * @return predicted label (+1 or -1)
      */
-    double apply(double x);
+    SimpleMatrix apply(SimpleMatrix x);
 }
