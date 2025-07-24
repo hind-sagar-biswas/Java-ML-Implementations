@@ -3,6 +3,8 @@ package com.hindbiswas.ml.models;
 import java.util.ArrayList;
 import org.ejml.simple.SimpleMatrix;
 
+import com.hindbiswas.ml.util.Matrix;
+
 /**
  * Implements logistic regression for binary classification using batch gradient
  * descent.
@@ -74,13 +76,9 @@ public class LogisticRegression {
         int n = dataX.get(0).size() + 1; // +1 for intercept term
 
         // Construct design matrix X and label vector y
-        SimpleMatrix x = new SimpleMatrix(m, n);
+        SimpleMatrix x = Matrix.build(dataX);
         SimpleMatrix y = new SimpleMatrix(m, 1);
         for (int i = 0; i < m; i++) {
-            x.set(i, 0, 1.0); // intercept term
-            for (int j = 0; j < n - 1; j++) {
-                x.set(i, j + 1, dataX.get(i).get(j));
-            }
             y.set(i, 0, dataY.get(i));
         }
 
@@ -113,12 +111,7 @@ public class LogisticRegression {
         if (theta == null) {
             throw new IllegalStateException("Model has not been fitted yet.");
         }
-        double[] xArray = new double[x.size() + 1];
-        xArray[0] = 1.0;
-        for (int i = 0; i < x.size(); i++) {
-            xArray[i + 1] = x.get(i);
-        }
-        SimpleMatrix xMatrix = new SimpleMatrix(1, xArray.length, true, xArray);
+        SimpleMatrix xMatrix = Matrix.row(x);
         double z = xMatrix.mult(theta).get(0, 0);
         return sigmoid(z);
     }

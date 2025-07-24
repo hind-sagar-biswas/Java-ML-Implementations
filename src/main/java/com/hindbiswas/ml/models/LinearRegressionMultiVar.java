@@ -4,6 +4,8 @@ import java.util.ArrayList;
 
 import org.ejml.simple.SimpleMatrix;
 
+import com.hindbiswas.ml.util.Matrix;
+
 /**
  * Multivariate linear regression using matrix algebra (Ordinary Least Squares)
  */
@@ -33,19 +35,10 @@ public class LinearRegressionMultiVar {
 
         // Copy inputs to internal arrays
         // Build X matrix with bias term
-        SimpleMatrix x = new SimpleMatrix(m, features + 1);
+        SimpleMatrix x = Matrix.build(dataX);
         SimpleMatrix y = new SimpleMatrix(m, 1);
 
         for (int i = 0; i < m; i++) {
-            ArrayList<Double> row = dataX.get(i);
-            if (row.size() != features) {
-                throw new IllegalArgumentException("All feature vectors must have the same length.");
-            }
-            // bias term
-            x.set(i, 0, 1.0);
-            for (int j = 0; j < features; j++) {
-                x.set(i, j + 1, row.get(j));
-            }
             y.set(i, 0, dataY.get(i));
         }
 
@@ -57,29 +50,23 @@ public class LinearRegressionMultiVar {
     /**
      * Predicts a target value for a given feature vector.
      * 
-     * @param xFeatures List of feature values (size n)
+     * @param x List of feature values (size n)
      * @return Predicted y
      * @throws IllegalStateException    if fit() has not been called
      * @throws IllegalArgumentException if xFeatures size does not match model
      */
-    public Double predict(ArrayList<Double> xFeatures) throws IllegalArgumentException, IllegalStateException {
+    public Double predict(ArrayList<Double> x) throws IllegalArgumentException, IllegalStateException {
         if (theta == null) {
             throw new IllegalStateException("Model has not been fitted yet.");
         }
         int features = theta.getNumRows() - 1;
-        if (xFeatures == null || xFeatures.size() != features) {
+        if (x == null || x.size() != features) {
             throw new IllegalArgumentException(
                     String.format("Expected %d features, but got %d.", features,
-                            (xFeatures == null ? 0 : xFeatures.size())));
+                            (x == null ? 0 : x.size())));
         }
 
-        // Build row vector [1, x1, x2, ...]
-        double[] arr = new double[features + 1];
-        arr[0] = 1.0;
-        for (int i = 0; i < features; i++) {
-            arr[i + 1] = xFeatures.get(i);
-        }
-        SimpleMatrix xRow = new SimpleMatrix(1, features + 1, true, arr);
+        SimpleMatrix xRow = Matrix.row(x);
         return xRow.mult(theta).get(0, 0);
     }
 

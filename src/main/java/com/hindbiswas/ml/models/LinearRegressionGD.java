@@ -5,6 +5,8 @@ import java.util.Objects;
 
 import org.ejml.simple.SimpleMatrix;
 
+import com.hindbiswas.ml.util.Matrix;
+
 /**
  * Implements multivariate linear regression using batch gradient descent.
  *
@@ -66,13 +68,9 @@ public class LinearRegressionGD {
         int n = dataX.get(0).size() + 1; // +1 for intercept
 
         // Build design matrix X and target vector y
-        SimpleMatrix x = new SimpleMatrix(m, n);
+        SimpleMatrix x = Matrix.build(dataX);
         SimpleMatrix y = new SimpleMatrix(m, 1);
         for (int i = 0; i < m; i++) {
-            x.set(i, 0, 1.0); // intercept term
-            for (int j = 0; j < n - 1; j++) {
-                x.set(i, j + 1, dataX.get(i).get(j));
-            }
             y.set(i, 0, dataY.get(i));
         }
 
@@ -98,22 +96,17 @@ public class LinearRegressionGD {
      * @throws IllegalStateException    if fit() has not been called
      * @throws IllegalArgumentException if features is null or length mismatch
      */
-    public Double predict(ArrayList<Double> features) throws IllegalArgumentException, IllegalStateException {
+    public Double predict(ArrayList<Double> x) throws IllegalArgumentException, IllegalStateException {
         if (theta == null) {
             throw new IllegalStateException("Model has not been fitted yet.");
         }
-        Objects.requireNonNull(features, "features cannot be null");
-        if (features.size() + 1 != theta.getNumRows()) {
+        Objects.requireNonNull(x, "features cannot be null");
+        if (x.size() + 1 != theta.getNumRows()) {
             throw new IllegalArgumentException(
-                    String.format("Expected %d features, but got %d.", theta.getNumRows() - 1, features.size()));
+                    String.format("Expected %d features, but got %d.", theta.getNumRows() - 1, x.size()));
         }
 
-        double[] xArray = new double[features.size() + 1];
-        xArray[0] = 1.0;
-        for (int i = 0; i < features.size(); i++) {
-            xArray[i + 1] = features.get(i);
-        }
-        SimpleMatrix xMatrix = new SimpleMatrix(1, features.size() + 1, true, xArray);
+        SimpleMatrix xMatrix = Matrix.row(x);
         return xMatrix.mult(theta).get(0, 0);
     }
 

@@ -13,6 +13,8 @@ import java.util.Random;
 
 import org.ejml.simple.SimpleMatrix;
 
+import com.hindbiswas.ml.util.Matrix;
+
 /**
  * Implements the classic perceptron algorithm for linearly separable data.
  */
@@ -179,13 +181,7 @@ public class Perceptron {
                 Collections.shuffle(indices);
 
             for (int idx : indices) {
-                double[] xiArr = new double[n];
-                xiArr[0] = 1.0; // bias input
-                for (int j = 0; j < n - 1; j++) {
-                    xiArr[j + 1] = dataX.get(idx).get(j);
-                }
-
-                SimpleMatrix inputs = new SimpleMatrix(n, 1, true, xiArr);
+                SimpleMatrix inputs = Matrix.column(dataX.get(idx));
                 double expected = dataY.get(idx);
 
                 // raw activation
@@ -218,14 +214,7 @@ public class Perceptron {
      * @param n dimension of theta (including bias)
      */
     private void seedWeights(int n) {
-        theta = new SimpleMatrix(n, 1); // Initialize with zeros
-
-        if (weightSeed != null) {
-            Random rand = new Random(weightSeed);
-            for (int i = 0; i < n; i++) {
-                theta.set(i, 0, rand.nextDouble());
-            }
-        }
+        theta = (weightSeed == null) ? new SimpleMatrix(n, 1) : Matrix.random(n, 1, weightSeed);
     }
 
     /**
@@ -240,13 +229,7 @@ public class Perceptron {
             throw new IllegalStateException("Model has not been fitted yet.");
         }
 
-        double[] xArray = new double[x.size() + 1];
-        xArray[0] = 1;
-        for (int i = 0; i < x.size(); i++) {
-            xArray[i + 1] = x.get(i);
-        }
-
-        SimpleMatrix xMatrix = new SimpleMatrix(1, xArray.length, true, xArray);
+        SimpleMatrix xMatrix = Matrix.row(x);
         double p = xMatrix.mult(theta).get(0, 0);
 
         return activation.apply(p);
