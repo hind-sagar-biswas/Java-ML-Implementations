@@ -3,11 +3,13 @@ package com.hindbiswas.ml;
 import java.io.IOException;
 import java.util.Map;
 
+import org.ejml.simple.SimpleMatrix;
+
 import com.hindbiswas.ml.data.BinaryDataLoader;
 import com.hindbiswas.ml.data.Dataset;
 import com.hindbiswas.ml.models.MultiLayerPerceptron;
 import com.hindbiswas.ml.models.Perceptron;
-import com.hindbiswas.ml.util.Activations;
+import com.hindbiswas.ml.util.LayerActivations;
 import com.opencsv.exceptions.CsvValidationException;
 
 /**
@@ -17,10 +19,11 @@ import com.opencsv.exceptions.CsvValidationException;
 public class App {
     public static void main(String[] args) {
         MultiLayerPerceptron mlp = new MultiLayerPerceptron(784, 2, 10);
-        mlp.layer(256, Activations.sigmoid());
-        mlp.layer(128, Activations.sigmoid());
-        mlp.layer(10, Activations.softmax());
+        mlp.layer(256, LayerActivations.sigmoid());
+        mlp.layer(128, LayerActivations.sigmoid());
+        mlp.layer(10, LayerActivations.softmax());
         mlp.configure(10, 2000, 0.2);
+        mlp.loss((pred, label) -> pred.minus(label));
     }
 
     public static void perceptron() {

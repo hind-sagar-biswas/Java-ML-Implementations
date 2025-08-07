@@ -13,6 +13,9 @@ public class MultiLayerPerceptron {
     private final int inputSize;
     private final int hiddenLayers;
     private final int outputSize;
+    private final double learningRate = 0.01;
+
+    private LossFunction lossFunction = null;
 
     private int epochs = 1;
     private int batchSize = 1;
@@ -29,23 +32,25 @@ public class MultiLayerPerceptron {
         this.outputSize = outputSize;
 
         this.layers = new Layer[hiddenLayers + 1];
+
+        this.lossFunction = (x, y) -> {
+            if (x.getNumRows() != y.getNumRows() || x.getNumCols() != y.getNumCols()) {
+                throw new IllegalArgumentException("Input and output matrices must have the same dimensions.");
+            }
+            return y.minus(x);
+        };
     }
 
-    public MultiLayerPerceptron layer(int perceptrons, Activation activation) throws IllegalStateException {
+    public MultiLayerPerceptron layer(int perceptrons, LayerActivation activation) throws IllegalStateException {
         if (hiddenLayersAdded == hiddenLayers + 1) {
             throw new IllegalStateException("Cannot add more layers.");
         }
 
-        layers[hiddenLayersAdded++] = new Layer(perceptrons, activation);
-        return this;
-    }
+        if (hiddenLayersAdded == 0)
+            layers[hiddenLayersAdded++] = new Layer(this.inputSize, perceptrons, activation);
+        else
+            layers[hiddenLayersAdded++] = new Layer(layers[hiddenLayersAdded - 1].perceptrons, perceptrons, activation);
 
-    public MultiLayerPerceptron layer(int perceptrons, BatchActivation activation) throws IllegalStateException {
-        if (hiddenLayersAdded == hiddenLayers + 1) {
-            throw new IllegalStateException("Cannot add more layers.");
-        }
-
-        layers[hiddenLayersAdded++] = new Layer(perceptrons, activation);
         return this;
     }
 
@@ -54,6 +59,11 @@ public class MultiLayerPerceptron {
         this.batchSize = batchSize;
         this.validationSplit = validationSplit;
 
+        return this;
+    }
+
+    public MultiLayerPerceptron loss(LossFunction lossFunction) {
+        this.lossFunction = lossFunction;
         return this;
     }
 
@@ -78,6 +88,38 @@ public class MultiLayerPerceptron {
                     String.format("Expected %d labels, but got %d.", dataX.size(), (dataY == null ? 0 : dataY.size())));
         }
 
+        SimpleMatrix yMatrix = new SimpleMatrix(dataY.size(), 1);
+
+        for (int i = 0; i < dataY.size(); i++) {
+            if (dataY.get(i) == null) {
+                throw new IllegalArgumentException("Labels cannot be null.");
+            }
+            if (dataY.get(i) < 0 || dataY.get(i) >= outputSize) {
+                throw new IllegalArgumentException("Labels must be in [0," + (outputSize - 1) + "]");
+            }
+            yMatrix.set(i, 0, dataY.get(i));
+        }
+
+        for (int i = 0; i < epochs; i++) {
+            for (int j = 0; j < dataX.size(); j++) {
+                SimpleMatrix x = Matrix.row(dataX.get(j));
+                SimpleMatrix y = new SimpleMatrix(outputSize, 1);
+
+                double label = dataY.get(j);
+                y.set((int) label, 0, 1.0);
+
+                for (Layer layer : layers) {
+                    x = layer.feedForward(x);
+                }
+
+                SimpleMatrix delta = lossFunction.apply(x, y);
+                for (int layerIdx = layers.length - 1; layerIdx >= 0; layerIdx--) {
+                    delta = layers[layerIdx].backpropagate(delta, learningRate, layerIdx != layers.length - 1);
+                }
+            }
+        }
+
+        this.fitted = true;
         return this;
     }
 
@@ -99,6 +141,28 @@ public class MultiLayerPerceptron {
         ArrayList<Double> output = new ArrayList<>();
         for (int i = 0; i < outputSize; i++) {
             output.add(xMatrix.get(i, 0));
+        }
+
+        return output;
+    }
+
+    public SimpleMatrix predict(SimpleMatrix xMatrix) throws IllegalArgumentException, IllegalStateException {
+        if (!fitted) {
+            throw new IllegalStateException("Model has not been fitted yet.");
+        }
+
+        if (xMatrix.getNumRows() != inputSize || xMatrix.getNumCols() != 1) {
+            throw new IllegalArgumentException(
+                    String.format("Expected input size %d, but got %d.", inputSize, xMatrix.getNumRows()));
+        }
+
+        for (Layer layer : layers) {
+            xMatrix = layer.feedForward(xMatrix);
+        }
+
+        SimpleMatrix output = new SimpleMatrix(outputSize, 1);
+        for (int i = 0; i < outputSize; i++) {
+            output.set(i, 0, xMatrix.get(i, 0));
         }
 
         return output;

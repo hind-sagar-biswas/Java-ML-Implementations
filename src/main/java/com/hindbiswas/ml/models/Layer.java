@@ -8,39 +8,45 @@ import com.hindbiswas.ml.util.Matrix;
  * Layer
  */
 class Layer {
-    private final Activation activation;
-    private final BatchActivation batchActivation;
-    private final int perceptrons;
-    private final SimpleMatrix weights;
+    private final LayerActivation activation;
+    private final int inputs;
+    public final int perceptrons;
 
-    public Layer(int perceptrons, Activation activation) {
+    private SimpleMatrix preActivationOutput;
+    private SimpleMatrix activationOutput;
+    private SimpleMatrix weights;
+    private SimpleMatrix input;
+
+    public Layer(int inputs, int perceptrons, LayerActivation activation) {
+        this.inputs = inputs;
         this.perceptrons = perceptrons;
         this.activation = activation;
-        this.batchActivation = null;
 
-        this.weights = Matrix.random(perceptrons, perceptrons + 1, 0);
-    }
-
-    public Layer(int perceptrons, BatchActivation batchActivation) {
-        this.perceptrons = perceptrons;
-        this.activation = null;
-        this.batchActivation = batchActivation;
-
-        this.weights = Matrix.random(perceptrons, perceptrons + 1, 0);
+        this.weights = Matrix.random(this.perceptrons, inputs + 1, 0);
     }
 
     public SimpleMatrix feedForward(SimpleMatrix input) {
-        SimpleMatrix raw = input.mult(weights);
+        this.input = new SimpleMatrix(this.inputs + 1, 1);
 
-        if (activation == null) {
-            return batchActivation.apply(raw);
+        for (int i = 0; i < this.inputs; i++) {
+            this.input.set(i, 0, input.get(i, 0));
         }
+        this.input.set(this.inputs, 0, 1);
 
-        SimpleMatrix output = new SimpleMatrix(perceptrons, 1);
-        for (int i = 0; i < perceptrons; i++) {
-            output.set(i, 0, activation.apply(raw.get(i, 0)));
-        }
+        preActivationOutput = weights.mult(this.input);
+        activationOutput = activation.apply(preActivationOutput);
 
-        return output;
+        return activationOutput;
+    }
+
+    public SimpleMatrix backpropagate(SimpleMatrix delta, double learningRate, boolean derivate) {
+        SimpleMatrix gradW = delta.mult(input.transpose());
+        weights = weights.minus(gradW.scale(learningRate));
+
+        SimpleMatrix back = weights.transpose().mult(delta);
+
+        return derivate
+                ? back.elementMult(activation.derivative(preActivationOutput))
+                : back;
     }
 }
