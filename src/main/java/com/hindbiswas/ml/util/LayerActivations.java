@@ -42,4 +42,143 @@ public class LayerActivations {
             }
         };
     }
+
+    public static LayerActivation linear() {
+        return new LayerActivation() {
+            @Override
+            public SimpleMatrix apply(SimpleMatrix x) {
+                return x.copy(); // identity
+            }
+
+            @Override
+            public SimpleMatrix derivative(SimpleMatrix x) {
+                SimpleMatrix ones = new SimpleMatrix(x.getNumRows(), x.getNumCols());
+                for (int r = 0; r < x.getNumRows(); r++) {
+                    for (int c = 0; c < x.getNumCols(); c++) {
+                        ones.set(r, c, 1.0);
+                    }
+                }
+                return ones;
+            }
+        };
+    }
+
+    public static LayerActivation tanh() {
+        return new LayerActivation() {
+            @Override
+            public SimpleMatrix apply(SimpleMatrix x) {
+                SimpleMatrix out = new SimpleMatrix(x.getNumRows(), x.getNumCols());
+                for (int r = 0; r < x.getNumRows(); r++) {
+                    for (int c = 0; c < x.getNumCols(); c++) {
+                        out.set(r, c, Math.tanh(x.get(r, c)));
+                    }
+                }
+                return out;
+            }
+
+            @Override
+            public SimpleMatrix derivative(SimpleMatrix x) {
+                // derivative = 1 - tanh(x)^2
+                SimpleMatrix t = apply(x);
+                SimpleMatrix d = new SimpleMatrix(x.getNumRows(), x.getNumCols());
+                for (int r = 0; r < x.getNumRows(); r++) {
+                    for (int c = 0; c < x.getNumCols(); c++) {
+                        double tv = t.get(r, c);
+                        d.set(r, c, 1.0 - tv * tv);
+                    }
+                }
+                return d;
+            }
+        };
+    }
+
+    public static LayerActivation relu() {
+        return new LayerActivation() {
+            @Override
+            public SimpleMatrix apply(SimpleMatrix x) {
+                SimpleMatrix out = new SimpleMatrix(x.getNumRows(), x.getNumCols());
+                for (int r = 0; r < x.getNumRows(); r++) {
+                    for (int c = 0; c < x.getNumCols(); c++) {
+                        double v = x.get(r, c);
+                        out.set(r, c, v > 0 ? v : 0.0);
+                    }
+                }
+                return out;
+            }
+
+            @Override
+            public SimpleMatrix derivative(SimpleMatrix x) {
+                SimpleMatrix d = new SimpleMatrix(x.getNumRows(), x.getNumCols());
+                for (int r = 0; r < x.getNumRows(); r++) {
+                    for (int c = 0; c < x.getNumCols(); c++) {
+                        d.set(r, c, x.get(r, c) > 0 ? 1.0 : 0.0);
+                    }
+                }
+                return d;
+            }
+        };
+    }
+
+    public static LayerActivation leakyRelu() {
+        return leakyRelu(0.01);
+    }
+
+    public static LayerActivation leakyRelu(final double alpha) {
+        return new LayerActivation() {
+            @Override
+            public SimpleMatrix apply(SimpleMatrix x) {
+                SimpleMatrix out = new SimpleMatrix(x.getNumRows(), x.getNumCols());
+                for (int r = 0; r < x.getNumRows(); r++) {
+                    for (int c = 0; c < x.getNumCols(); c++) {
+                        double v = x.get(r, c);
+                        out.set(r, c, v > 0 ? v : alpha * v);
+                    }
+                }
+                return out;
+            }
+
+            @Override
+            public SimpleMatrix derivative(SimpleMatrix x) {
+                SimpleMatrix d = new SimpleMatrix(x.getNumRows(), x.getNumCols());
+                for (int r = 0; r < x.getNumRows(); r++) {
+                    for (int c = 0; c < x.getNumCols(); c++) {
+                        d.set(r, c, x.get(r, c) > 0 ? 1.0 : alpha);
+                    }
+                }
+                return d;
+            }
+        };
+    }
+
+    public static LayerActivation elu() {
+        return elu(1.0);
+    }
+
+    public static LayerActivation elu(final double alpha) {
+        return new LayerActivation() {
+            @Override
+            public SimpleMatrix apply(SimpleMatrix x) {
+                SimpleMatrix out = new SimpleMatrix(x.getNumRows(), x.getNumCols());
+                for (int r = 0; r < x.getNumRows(); r++) {
+                    for (int c = 0; c < x.getNumCols(); c++) {
+                        double v = x.get(r, c);
+                        out.set(r, c, v >= 0 ? v : alpha * (Math.exp(v) - 1.0));
+                    }
+                }
+                return out;
+            }
+
+            @Override
+            public SimpleMatrix derivative(SimpleMatrix x) {
+                SimpleMatrix d = new SimpleMatrix(x.getNumRows(), x.getNumCols());
+                for (int r = 0; r < x.getNumRows(); r++) {
+                    for (int c = 0; c < x.getNumCols(); c++) {
+                        double v = x.get(r, c);
+                        d.set(r, c, v >= 0 ? 1.0 : alpha * Math.exp(v));
+                    }
+                }
+                return d;
+            }
+        };
+    }
 }
