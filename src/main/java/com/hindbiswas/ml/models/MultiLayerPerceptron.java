@@ -30,6 +30,26 @@ public class MultiLayerPerceptron {
         this(inputSize, hiddenLayers, outputSize, 0.01);
     }
 
+    public MultiLayerPerceptron(int inputSize, int[] perceptrons, LayerActivation[] activations) {
+        this(inputSize, perceptrons, activations, 0.01);
+    }
+
+    public MultiLayerPerceptron(int inputSize, int[] perceptrons, LayerActivation[] activations, double learningRate) {
+        this(inputSize, perceptrons.length, perceptrons[perceptrons.length - 1], learningRate);
+
+        if (perceptrons.length != activations.length) {
+            throw new IllegalArgumentException("Perceptrons and activations arrays must have the same length.");
+        }
+
+        if (perceptrons.length == 0) {
+            throw new IllegalArgumentException("At least one hidden layer must be added.");
+        }
+
+        for (int i = 0; i < perceptrons.length; i++) {
+            this.layer(perceptrons[i], activations[i]);
+        }
+    }
+
     public MultiLayerPerceptron(int inputSize, int hiddenLayers, int outputSize, double learningRate) {
         this.inputSize = inputSize;
         this.hiddenLayers = hiddenLayers;
@@ -47,8 +67,8 @@ public class MultiLayerPerceptron {
     }
 
     public MultiLayerPerceptron layer(int perceptrons, LayerActivation activation) throws IllegalStateException {
-        if (hiddenLayersAdded >= layers.length) {
-            throw new IllegalStateException("Cannot add more layers.");
+        if (hiddenLayersAdded != layers.length) {
+            throw new IllegalStateException("All layers (hidden + output) must be added before fit()");
         }
 
         if (hiddenLayersAdded == 0) {
@@ -77,8 +97,10 @@ public class MultiLayerPerceptron {
 
     public MultiLayerPerceptron fit(ArrayList<ArrayList<Double>> dataX, ArrayList<Double> dataY)
             throws IllegalArgumentException, IllegalStateException {
-        if (hiddenLayersAdded < hiddenLayers) {
-            throw new IllegalStateException("Model's layers have not been added yet.");
+        if (hiddenLayersAdded != layers.length) {
+            throw new IllegalStateException(
+                    "You must add all layers (hidden + output). Expected " + layers.length + " layers, but added "
+                            + hiddenLayersAdded);
         }
 
         if (hiddenLayers == hiddenLayersAdded) {

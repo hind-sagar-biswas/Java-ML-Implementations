@@ -37,19 +37,8 @@ public class LayerActivations {
 
             @Override
             public SimpleMatrix derivative(SimpleMatrix x) {
-                SimpleMatrix s = apply(x);
-                int n = s.getNumRows();
-                SimpleMatrix jacobian = new SimpleMatrix(n, n);
-                for (int i = 0; i < n; i++) {
-                    for (int j = 0; j < n; j++) {
-                        if (i == j) {
-                            jacobian.set(i, j, s.get(i) * (1 - s.get(i)));
-                        } else {
-                            jacobian.set(i, j, -s.get(i) * s.get(j));
-                        }
-                    }
-                }
-                return jacobian;
+                throw new UnsupportedOperationException(
+                        "Softmax derivative (Jacobian) is not supported for elementwise backprop. Use softmax only as final layer with cross-entropy.");
             }
         };
     }
