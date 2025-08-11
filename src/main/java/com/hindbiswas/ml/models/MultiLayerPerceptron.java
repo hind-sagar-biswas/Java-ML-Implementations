@@ -8,6 +8,8 @@ import java.util.Random;
 import org.ejml.simple.SimpleMatrix;
 
 import com.hindbiswas.ml.util.LayerActivations;
+import com.hindbiswas.ml.util.LossFunctions;
+import com.hindbiswas.ml.util.LossGradients;
 import com.hindbiswas.ml.util.Matrix;
 
 /**
@@ -63,22 +65,8 @@ public class MultiLayerPerceptron {
 
         this.layers = new Layer[hiddenLayers + 1];
 
-        this.lossGradient = (pred, label) -> {
-            if (pred.getNumRows() != label.getNumRows() || pred.getNumCols() != label.getNumCols()) {
-                throw new IllegalArgumentException("Input and output matrices must have the same dimensions.");
-            }
-            return pred.minus(label);
-        };
-
-        this.lossFuncton = (pred, label) -> {
-            SimpleMatrix diff = pred.minus(label);
-            double sampleLoss = 0.0;
-            for (int r = 0; r < diff.getNumRows(); r++) {
-                double v = diff.get(r, 0);
-                sampleLoss += v * v;
-            }
-            return sampleLoss;
-        };
+        this.lossGradient = LossGradients.resolve(LossGradients.softmaxCrossEntropy());
+        this.lossFuncton = LossFunctions.resolve(LossFunctions.sse());
     }
 
     public MultiLayerPerceptron layer(int perceptrons, String activation)
