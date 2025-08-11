@@ -40,7 +40,7 @@ public class MultiLayerPerceptronTest {
         mlp.configure(1500, 1, 0.0);
 
         // Use softmax + cross-entropy gradient: pred - label (dL/dz)
-        mlp.loss((pred, label) -> pred.minus(label));
+        mlp.lossGradient((pred, label) -> pred.minus(label));
 
         // Build a small synthetic dataset (linearly separable):
         // label = 1 if x0 + x1 > 1.0 else 0

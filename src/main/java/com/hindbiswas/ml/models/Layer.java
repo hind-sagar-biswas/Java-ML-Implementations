@@ -38,18 +38,35 @@ class Layer {
         return activationOutput;
     }
 
+    public SimpleMatrix gradient(SimpleMatrix delta) {
+        return delta.mult(input.transpose());
+    }
+
     public SimpleMatrix backpropagate(SimpleMatrix delta, double learningRate) {
-        // grad for this layer (perceptrons x (inputs+1))
-        SimpleMatrix gradW = delta.mult(input.transpose());
-        // update weights including bias column (column 0)
+        SimpleMatrix gradW = gradient(delta);
+
         weights = weights.minus(gradW.scale(learningRate));
 
-        // compute W^T * delta -> size (inputs+1) x 1
         SimpleMatrix back = weights.transpose().mult(delta);
 
-        // drop the bias element (row 0) before sending delta to previous layer
         SimpleMatrix backWithoutBias = back.extractMatrix(1, back.getNumRows(), 0, 1);
-        return backWithoutBias; // size inputs x 1
+        return backWithoutBias;
+    }
+
+    public SimpleMatrix backpropagate(SimpleMatrix delta) {
+        SimpleMatrix back = weights.transpose().mult(delta);
+        return back.extractMatrix(1, back.getNumRows(), 0, 1);
+    }
+
+    public void applyGradient(SimpleMatrix gradW, double learningRate, int batchSize) {
+        if (batchSize <= 0)
+            batchSize = 1;
+        SimpleMatrix avgUpdate = gradW.scale(learningRate / batchSize);
+        weights = weights.minus(avgUpdate);
+    }
+
+    public SimpleMatrix zeroGrad() {
+        return new SimpleMatrix(weights.getNumRows(), weights.getNumCols());
     }
 
     public SimpleMatrix getActivationDerivativeOfPreActivation() {

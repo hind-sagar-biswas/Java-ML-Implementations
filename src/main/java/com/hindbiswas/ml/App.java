@@ -21,7 +21,7 @@ public class App {
         mlp.layer(128, LayerActivations.sigmoid());
         mlp.layer(10, LayerActivations.softmax());
         mlp.configure(10, 2000, 0.2);
-        mlp.loss((pred, label) -> pred.minus(label));
+        mlp.lossGradient((pred, label) -> pred.minus(label));
     }
 
     public static void perceptron() {

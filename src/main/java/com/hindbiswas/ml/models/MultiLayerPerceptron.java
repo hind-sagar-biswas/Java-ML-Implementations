@@ -1,6 +1,9 @@
 package com.hindbiswas.ml.models;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 import org.ejml.simple.SimpleMatrix;
 
@@ -15,7 +18,8 @@ public class MultiLayerPerceptron {
     private final int outputSize;
     private final double learningRate;
 
-    private LossFunction lossFunction = null;
+    private LossGradient lossGradient = null;
+    private LossFunction lossFuncton = null;
 
     private int epochs = 1;
     private int batchSize = 1;
@@ -58,17 +62,27 @@ public class MultiLayerPerceptron {
 
         this.layers = new Layer[hiddenLayers + 1];
 
-        this.lossFunction = (pred, label) -> {
+        this.lossGradient = (pred, label) -> {
             if (pred.getNumRows() != label.getNumRows() || pred.getNumCols() != label.getNumCols()) {
                 throw new IllegalArgumentException("Input and output matrices must have the same dimensions.");
             }
             return pred.minus(label);
         };
+
+        this.lossFuncton = (pred, label) -> {
+            SimpleMatrix diff = pred.minus(label);
+            double sampleLoss = 0.0;
+            for (int r = 0; r < diff.getNumRows(); r++) {
+                double v = diff.get(r, 0);
+                sampleLoss += v * v;
+            }
+            return sampleLoss;
+        };
     }
 
     public MultiLayerPerceptron layer(int perceptrons, LayerActivation activation) throws IllegalStateException {
-        if (hiddenLayersAdded != layers.length) {
-            throw new IllegalStateException("All layers (hidden + output) must be added before fit()");
+        if (hiddenLayersAdded == layers.length) {
+            throw new IllegalStateException("Maximum number of layers reached.");
         }
 
         if (hiddenLayersAdded == 0) {
@@ -90,8 +104,12 @@ public class MultiLayerPerceptron {
         return this;
     }
 
+    public MultiLayerPerceptron lossGradient(LossGradient lossGradient) {
+        this.lossGradient = lossGradient;
+        return this;
+    }
+
     public MultiLayerPerceptron loss(LossFunction lossFunction) {
-        this.lossFunction = lossFunction;
         return this;
     }
 
@@ -118,27 +136,97 @@ public class MultiLayerPerceptron {
                     String.format("Expected %d labels, but got %d.", dataX.size(), (dataY == null ? 0 : dataY.size())));
         }
 
-        for (int i = 0; i < epochs; i++) {
-            for (int j = 0; j < dataX.size(); j++) {
-                SimpleMatrix x = Matrix.columnWithoutBias(dataX.get(j));
-                SimpleMatrix y = new SimpleMatrix(outputSize, 1);
+        final int n = dataX.size();
 
-                double label = dataY.get(j);
-                y.set((int) label, 0, 1.0);
+        // Build and shuffle indices once, then split into validation and training sets
+        ArrayList<Integer> allIndices = new ArrayList<>();
+        for (int i = 0; i < n; i++)
+            allIndices.add(i);
+        Collections.shuffle(allIndices, new Random());
 
-                for (Layer layer : layers)
-                    x = layer.feedForward(x);
+        int valSize = (int) (n * validationSplit);
+        List<Integer> valIndices = allIndices.subList(0, valSize);
+        List<Integer> trainIndices = allIndices.subList(valSize, n);
 
-                SimpleMatrix delta = lossFunction.apply(x, y);
-                for (int layerIdx = layers.length - 1; layerIdx >= 0; layerIdx--) {
-                    SimpleMatrix deltaPrev = layers[layerIdx].backpropagate(delta, learningRate);
-                    if (layerIdx > 0) {
-                        SimpleMatrix prevDeriv = layers[layerIdx - 1].getActivationDerivativeOfPreActivation();
-                        delta = deltaPrev.elementMult(prevDeriv);
-                    } else {
-                        delta = deltaPrev;
+        for (int epoch = 0; epoch < epochs; epoch++) {
+            Collections.shuffle(trainIndices, new Random());
+
+            for (int start = 0; start < trainIndices.size(); start += batchSize) {
+                int end = Math.min(start + batchSize, trainIndices.size());
+                int currentBatchSize = end - start;
+
+                SimpleMatrix[] accumGrads = new SimpleMatrix[layers.length];
+                for (int li = 0; li < layers.length; li++) {
+                    accumGrads[li] = layers[li].zeroGrad();
+                }
+
+                // accumulation
+                for (int j = start; j < end; j++) {
+                    int idx = trainIndices.get(j);
+
+                    SimpleMatrix x = Matrix.columnWithoutBias(dataX.get(idx));
+                    SimpleMatrix y = new SimpleMatrix(outputSize, 1);
+
+                    double label = dataY.get(idx);
+                    y.set((int) label, 0, 1.0);
+
+                    for (Layer layer : layers)
+                        x = layer.feedForward(x);
+
+                    SimpleMatrix delta = lossGradient.apply(x, y);
+                    for (int layerIdx = layers.length - 1; layerIdx >= 0; layerIdx--) {
+                        SimpleMatrix gradW = layers[layerIdx].gradient(delta);
+                        accumGrads[layerIdx] = accumGrads[layerIdx].plus(gradW);
+
+                        SimpleMatrix deltaPrev = layers[layerIdx].backpropagate(delta);
+
+                        if (layerIdx > 0) {
+                            SimpleMatrix prevDeriv = layers[layerIdx - 1].getActivationDerivativeOfPreActivation();
+                            delta = deltaPrev.elementMult(prevDeriv);
+                        } else {
+                            delta = deltaPrev;
+                        }
                     }
                 }
+
+                for (int li = 0; li < layers.length; li++) {
+                    layers[li].applyGradient(accumGrads[li], learningRate, currentBatchSize);
+                }
+            }
+
+            if (valIndices.size() > 0) {
+                double totalValLoss = 0.0;
+                int correct = 0;
+                for (int idx : valIndices) {
+                    SimpleMatrix x = Matrix.columnWithoutBias(dataX.get(idx));
+                    for (Layer layer : layers)
+                        x = layer.feedForward(x);
+
+                    SimpleMatrix y = new SimpleMatrix(outputSize, 1);
+                    y.set(dataY.get(idx).intValue(), 0, 1.0);
+
+                    totalValLoss += this.lossFuncton.apply(x, y);
+
+                    // accuracy
+                    int predIdx = 0;
+                    double best = x.get(0, 0);
+                    for (int r = 1; r < x.getNumRows(); r++) {
+                        if (x.get(r, 0) > best) {
+                            best = x.get(r, 0);
+                            predIdx = r;
+                        }
+                    }
+                    if (predIdx == dataY.get(idx).intValue())
+                        correct++;
+                }
+
+                double avgValLoss = totalValLoss / valIndices.size();
+                double valAcc = (double) correct / valIndices.size();
+
+                System.out.printf("Epoch %d/%d — val_loss=%.6f val_acc=%.4f\n", epoch + 1, epochs, avgValLoss, valAcc);
+            } else {
+                System.out.printf("Epoch %d/%d — no validation set (validationSplit=%.3f)\n", epoch + 1, epochs,
+                        validationSplit);
             }
         }
 
