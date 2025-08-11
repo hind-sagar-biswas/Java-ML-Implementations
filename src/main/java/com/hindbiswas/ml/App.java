@@ -8,6 +8,7 @@ import com.hindbiswas.ml.data.Dataset;
 import com.hindbiswas.ml.models.MultiLayerPerceptron;
 import com.hindbiswas.ml.models.Perceptron;
 import com.hindbiswas.ml.util.LayerActivations;
+import com.hindbiswas.ml.util.LossGradients;
 import com.opencsv.exceptions.CsvValidationException;
 
 /**
@@ -21,7 +22,7 @@ public class App {
         mlp.layer(128, LayerActivations.sigmoid());
         mlp.layer(10, LayerActivations.softmax());
         mlp.configure(10, 2000, 0.2);
-        mlp.lossGradient((pred, label) -> pred.minus(label));
+        mlp.lossGradient(LossGradients.softmaxCrossEntropy());
     }
 
     public static void perceptron() {

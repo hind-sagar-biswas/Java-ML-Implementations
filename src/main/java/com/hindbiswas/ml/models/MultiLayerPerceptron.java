@@ -96,12 +96,13 @@ public class MultiLayerPerceptron {
         return this;
     }
 
-    public MultiLayerPerceptron lossGradient(LossGradient lossGradient) {
-        this.lossGradient = lossGradient;
+    public MultiLayerPerceptron lossGradient(String lossGradient) throws IllegalArgumentException {
+        this.lossGradient = LossGradients.resolve(lossGradient);
         return this;
     }
 
-    public MultiLayerPerceptron loss(LossFunction lossFunction) {
+    public MultiLayerPerceptron loss(String lossFunction) throws IllegalArgumentException {
+        this.lossFuncton = LossFunctions.resolve(lossFunction);
         return this;
     }
 

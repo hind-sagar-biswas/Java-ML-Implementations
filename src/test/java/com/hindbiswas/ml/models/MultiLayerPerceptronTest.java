@@ -3,6 +3,7 @@ package com.hindbiswas.ml.models;
 import org.junit.jupiter.api.Test;
 
 import com.hindbiswas.ml.util.LayerActivations;
+import com.hindbiswas.ml.util.LossGradients;
 import com.hindbiswas.ml.util.Matrix;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,7 +41,7 @@ public class MultiLayerPerceptronTest {
         mlp.configure(1500, 1, 0.0);
 
         // Use softmax + cross-entropy gradient: pred - label (dL/dz)
-        mlp.lossGradient((pred, label) -> pred.minus(label));
+        mlp.lossGradient(LossGradients.softmaxCrossEntropy());
 
         // Build a small synthetic dataset (linearly separable):
         // label = 1 if x0 + x1 > 1.0 else 0
