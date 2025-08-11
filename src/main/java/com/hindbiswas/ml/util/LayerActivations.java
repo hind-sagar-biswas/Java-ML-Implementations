@@ -8,6 +8,79 @@ import com.hindbiswas.ml.models.LayerActivation;
  * LayerActivations
  */
 public class LayerActivations {
+
+    public static String sigmoid() {
+        return "sigmoid";
+    }
+
+    public static String softmax() {
+        return "softmax";
+    }
+
+    public static String linear() {
+        return "linear";
+    }
+
+    public static String tanh() {
+        return "tanh";
+    }
+
+    public static String relu() {
+        return "relu";
+    }
+
+    public static String leakyRelu() {
+        return "leakyRelu";
+    }
+
+    public static String leakyRelu(double alpha) {
+        return "leakyRelu=double:" + alpha;
+    }
+
+    public static String elu() {
+        return "elu";
+    }
+
+    public static String elu(double alpha) {
+        return "elu=double:" + alpha;
+    }
+
+    public static LayerActivation resolve(String name) throws IllegalArgumentException {
+        String[] parts = name.split("=");
+        String activationType = parts[0];
+        String[] params = new String[parts.length - 1];
+        System.arraycopy(parts, 1, params, 0, params.length);
+        switch (activationType) {
+            case "sigmoid":
+                return LayerActivationFunctions.sigmoid();
+            case "softmax":
+                return LayerActivationFunctions.softmax();
+            case "linear":
+                return LayerActivationFunctions.linear();
+            case "tanh":
+                return LayerActivationFunctions.tanh();
+            case "relu":
+                return LayerActivationFunctions.relu();
+            case "leakyRelu":
+                if (params.length > 0 && params[0].startsWith("double:")) {
+                    double alpha = Double.parseDouble(params[0].substring(7));
+                    return LayerActivationFunctions.leakyRelu(alpha);
+                }
+                return LayerActivationFunctions.leakyRelu();
+            case "elu":
+                if (params.length > 0 && params[0].startsWith("double:")) {
+                    double alpha = Double.parseDouble(params[0].substring(7));
+                    return LayerActivationFunctions.elu(alpha);
+                }
+                return LayerActivationFunctions.elu();
+            default:
+                throw new IllegalArgumentException("Unknown activation function: " + name);
+        }
+    }
+
+}
+
+class LayerActivationFunctions {
     public static LayerActivation sigmoid() {
         return new LayerActivation() {
             @Override
@@ -19,6 +92,11 @@ public class LayerActivations {
             public SimpleMatrix derivative(SimpleMatrix x) {
                 SimpleMatrix sigmoid = apply(x);
                 return sigmoid.elementMult(sigmoid.minus(1).negative());
+            }
+
+            @Override
+            public String toString() {
+                return "sigmoid";
             }
         };
     }
@@ -40,6 +118,11 @@ public class LayerActivations {
                 throw new UnsupportedOperationException(
                         "Softmax derivative (Jacobian) is not supported for elementwise backprop. Use softmax only as final layer with cross-entropy.");
             }
+
+            @Override
+            public String toString() {
+                return "softmax";
+            }
         };
     }
 
@@ -59,6 +142,11 @@ public class LayerActivations {
                     }
                 }
                 return ones;
+            }
+
+            @Override
+            public String toString() {
+                return "linear";
             }
         };
     }
@@ -89,6 +177,11 @@ public class LayerActivations {
                 }
                 return d;
             }
+
+            @Override
+            public String toString() {
+                return "tanh";
+            }
         };
     }
 
@@ -115,6 +208,11 @@ public class LayerActivations {
                     }
                 }
                 return d;
+            }
+
+            @Override
+            public String toString() {
+                return "relu";
             }
         };
     }
@@ -147,6 +245,11 @@ public class LayerActivations {
                 }
                 return d;
             }
+
+            @Override
+            public String toString() {
+                return "leakyRelu=double:" + alpha;
+            }
         };
     }
 
@@ -178,6 +281,11 @@ public class LayerActivations {
                     }
                 }
                 return d;
+            }
+
+            @Override
+            public String toString() {
+                return "elu=double:" + alpha;
             }
         };
     }

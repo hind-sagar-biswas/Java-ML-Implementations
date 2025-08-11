@@ -7,6 +7,7 @@ import java.util.Random;
 
 import org.ejml.simple.SimpleMatrix;
 
+import com.hindbiswas.ml.util.LayerActivations;
 import com.hindbiswas.ml.util.Matrix;
 
 /**
@@ -34,11 +35,11 @@ public class MultiLayerPerceptron {
         this(inputSize, hiddenLayers, outputSize, 0.01);
     }
 
-    public MultiLayerPerceptron(int inputSize, int[] perceptrons, LayerActivation[] activations) {
+    public MultiLayerPerceptron(int inputSize, int[] perceptrons, String[] activations) {
         this(inputSize, perceptrons, activations, 0.01);
     }
 
-    public MultiLayerPerceptron(int inputSize, int[] perceptrons, LayerActivation[] activations, double learningRate) {
+    public MultiLayerPerceptron(int inputSize, int[] perceptrons, String[] activations, double learningRate) {
         this(inputSize, perceptrons.length, perceptrons[perceptrons.length - 1], learningRate);
 
         if (perceptrons.length != activations.length) {
@@ -80,16 +81,19 @@ public class MultiLayerPerceptron {
         };
     }
 
-    public MultiLayerPerceptron layer(int perceptrons, LayerActivation activation) throws IllegalStateException {
+    public MultiLayerPerceptron layer(int perceptrons, String activation)
+            throws IllegalStateException, IllegalArgumentException {
         if (hiddenLayersAdded == layers.length) {
             throw new IllegalStateException("Maximum number of layers reached.");
         }
 
+        LayerActivation activationFunction = LayerActivations.resolve(activation);
+
         if (hiddenLayersAdded == 0) {
-            layers[hiddenLayersAdded] = new Layer(this.inputSize, perceptrons, activation);
+            layers[hiddenLayersAdded] = new Layer(this.inputSize, perceptrons, activationFunction);
         } else {
             int prevIdx = hiddenLayersAdded - 1;
-            layers[hiddenLayersAdded] = new Layer(layers[prevIdx].perceptrons, perceptrons, activation);
+            layers[hiddenLayersAdded] = new Layer(layers[prevIdx].perceptrons, perceptrons, activationFunction);
         }
 
         hiddenLayersAdded++;
