@@ -76,4 +76,16 @@ public class Matrix {
         return matrix;
     }
 
+    public static double[][] toArray2D(SimpleMatrix m) {
+        int r = m.getNumRows(), c = m.getNumCols();
+        double[][] a = new double[r][c];
+        for (int i = 0; i < r; i++)
+            for (int j = 0; j < c; j++)
+                a[i][j] = m.get(i, j);
+        return a;
+    }
+
+    public static SimpleMatrix fromArray2D(double[][] a) {
+        return new SimpleMatrix(a);
+    }
 }

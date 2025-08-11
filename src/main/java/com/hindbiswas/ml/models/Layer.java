@@ -2,6 +2,8 @@ package com.hindbiswas.ml.models;
 
 import org.ejml.simple.SimpleMatrix;
 
+import com.hindbiswas.ml.data.LayerDTO;
+import com.hindbiswas.ml.util.LayerActivations;
 import com.hindbiswas.ml.util.Matrix;
 
 /**
@@ -16,6 +18,14 @@ class Layer {
     private SimpleMatrix activationOutput;
     private SimpleMatrix weights;
     private SimpleMatrix input;
+
+    public Layer(LayerDTO dto) {
+        this.inputs = dto.inputs;
+        this.perceptrons = dto.perceptrons;
+        this.activation = LayerActivations.resolve(dto.activationName);
+
+        this.weights = Matrix.fromArray2D(dto.weights);
+    }
 
     public Layer(int inputs, int perceptrons, LayerActivation activation) {
         this.inputs = inputs;
@@ -71,5 +81,14 @@ class Layer {
 
     public SimpleMatrix getActivationDerivativeOfPreActivation() {
         return activation.derivative(preActivationOutput);
+    }
+
+    public LayerDTO toDTO() {
+        LayerDTO dto = new LayerDTO();
+        dto.activationName = activation.toString();
+        dto.weights = Matrix.toArray2D(weights);
+        dto.perceptrons = perceptrons;
+        dto.inputs = inputs;
+        return dto;
     }
 }

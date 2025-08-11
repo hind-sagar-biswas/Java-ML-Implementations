@@ -1,5 +1,8 @@
 package com.hindbiswas.ml.models;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -7,6 +10,9 @@ import java.util.Random;
 
 import org.ejml.simple.SimpleMatrix;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.hindbiswas.ml.data.MLPModelDTO;
 import com.hindbiswas.ml.util.LayerActivations;
 import com.hindbiswas.ml.util.LossFunctions;
 import com.hindbiswas.ml.util.LossGradients;
@@ -32,6 +38,24 @@ public class MultiLayerPerceptron {
     private Layer[] layers;
 
     private boolean fitted = false;
+
+    public MultiLayerPerceptron(MLPModelDTO dto) {
+        this.inputSize = dto.inputSize;
+        this.hiddenLayers = dto.hiddenLayers;
+        this.outputSize = dto.outputSize;
+        this.learningRate = dto.learningRate;
+        this.epochs = dto.epochs;
+        this.batchSize = dto.batchSize;
+        this.validationSplit = dto.validationSplit;
+        this.lossGradient = LossGradients.resolve(dto.lossGradientName);
+        this.lossFuncton = LossFunctions.resolve(dto.lossFunctionName);
+        this.layers = new Layer[dto.layers.size()];
+        this.fitted = true;
+        for (int i = 0; i < dto.layers.size(); i++) {
+            this.layers[i] = new Layer(dto.layers.get(i));
+            this.hiddenLayersAdded++;
+        }
+    }
 
     public MultiLayerPerceptron(int inputSize, int hiddenLayers, int outputSize) {
         this(inputSize, hiddenLayers, outputSize, 0.01);
@@ -88,7 +112,11 @@ public class MultiLayerPerceptron {
         return this;
     }
 
-    public MultiLayerPerceptron configure(int epochs, int batchSize, double validationSplit) {
+    public MultiLayerPerceptron configure(int epochs, int batchSize, double validationSplit)
+            throws IllegalStateException {
+        if (fitted) {
+            throw new IllegalStateException("Model has already been fitted.");
+        }
         this.epochs = epochs;
         this.batchSize = batchSize;
         this.validationSplit = validationSplit;
@@ -96,18 +124,29 @@ public class MultiLayerPerceptron {
         return this;
     }
 
-    public MultiLayerPerceptron lossGradient(String lossGradient) throws IllegalArgumentException {
+    public MultiLayerPerceptron lossGradient(String lossGradient)
+            throws IllegalArgumentException, IllegalStateException {
+        if (fitted) {
+            throw new IllegalStateException("Model has already been fitted.");
+        }
         this.lossGradient = LossGradients.resolve(lossGradient);
         return this;
     }
 
-    public MultiLayerPerceptron loss(String lossFunction) throws IllegalArgumentException {
+    public MultiLayerPerceptron loss(String lossFunction) throws IllegalArgumentException, IllegalStateException {
+        if (fitted) {
+            throw new IllegalStateException("Model has already been fitted.");
+        }
         this.lossFuncton = LossFunctions.resolve(lossFunction);
         return this;
     }
 
     public MultiLayerPerceptron fit(ArrayList<ArrayList<Double>> dataX, ArrayList<Double> dataY)
             throws IllegalArgumentException, IllegalStateException {
+        if (fitted) {
+            throw new IllegalStateException("Model has already been fitted.");
+        }
+
         if (hiddenLayersAdded != layers.length) {
             throw new IllegalStateException(
                     "You must add all layers (hidden + output). Expected " + layers.length + " layers, but added "
@@ -270,5 +309,49 @@ public class MultiLayerPerceptron {
         }
 
         return output;
+    }
+
+    public boolean export(Path path) {
+        try {
+            String json = toString();
+            Files.write(path, json.getBytes(StandardCharsets.UTF_8));
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Failed to export model to " + path + ": " + e.getMessage());
+            System.err.println("Model: " + toString());
+            return false;
+        }
+    }
+
+    public MultiLayerPerceptron importModel(Path path) throws Exception {
+        String json = Files.readString(path, StandardCharsets.UTF_8);
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        MLPModelDTO dto = gson.fromJson(json, MLPModelDTO.class);
+        return new MultiLayerPerceptron(dto);
+    }
+
+    public MLPModelDTO toDTO() {
+        MLPModelDTO dto = new MLPModelDTO();
+        dto.inputSize = inputSize;
+        dto.hiddenLayers = layers.length;
+        dto.outputSize = outputSize;
+        dto.learningRate = learningRate;
+        dto.epochs = epochs;
+        dto.batchSize = batchSize;
+        dto.validationSplit = validationSplit;
+        dto.lossGradientName = lossGradient.toString();
+        dto.lossFunctionName = lossFuncton.toString();
+        for (Layer layer : layers) {
+            dto.layers.add(layer.toDTO());
+        }
+        return dto;
+    }
+
+    @Override
+    public String toString() {
+        MLPModelDTO dto = toDTO();
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        return gson.toJson(dto);
     }
 }
