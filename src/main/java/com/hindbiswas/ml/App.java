@@ -3,8 +3,6 @@ package com.hindbiswas.ml;
 import java.io.IOException;
 import java.util.Map;
 
-import org.ejml.simple.SimpleMatrix;
-
 import com.hindbiswas.ml.data.BinaryDataLoader;
 import com.hindbiswas.ml.data.Dataset;
 import com.hindbiswas.ml.models.MultiLayerPerceptron;

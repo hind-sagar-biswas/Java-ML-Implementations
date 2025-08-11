@@ -13,7 +13,7 @@ public class MultiLayerPerceptron {
     private final int inputSize;
     private final int hiddenLayers;
     private final int outputSize;
-    private final double learningRate = 0.01;
+    private final double learningRate;
 
     private LossFunction lossFunction = null;
 
@@ -27,30 +27,38 @@ public class MultiLayerPerceptron {
     private boolean fitted = false;
 
     public MultiLayerPerceptron(int inputSize, int hiddenLayers, int outputSize) {
+        this(inputSize, hiddenLayers, outputSize, 0.01);
+    }
+
+    public MultiLayerPerceptron(int inputSize, int hiddenLayers, int outputSize, double learningRate) {
         this.inputSize = inputSize;
         this.hiddenLayers = hiddenLayers;
         this.outputSize = outputSize;
+        this.learningRate = learningRate;
 
         this.layers = new Layer[hiddenLayers + 1];
 
-        this.lossFunction = (x, y) -> {
-            if (x.getNumRows() != y.getNumRows() || x.getNumCols() != y.getNumCols()) {
+        this.lossFunction = (pred, label) -> {
+            if (pred.getNumRows() != label.getNumRows() || pred.getNumCols() != label.getNumCols()) {
                 throw new IllegalArgumentException("Input and output matrices must have the same dimensions.");
             }
-            return y.minus(x);
+            return pred.minus(label);
         };
     }
 
     public MultiLayerPerceptron layer(int perceptrons, LayerActivation activation) throws IllegalStateException {
-        if (hiddenLayersAdded == hiddenLayers + 1) {
+        if (hiddenLayersAdded >= layers.length) {
             throw new IllegalStateException("Cannot add more layers.");
         }
 
-        if (hiddenLayersAdded == 0)
-            layers[hiddenLayersAdded++] = new Layer(this.inputSize, perceptrons, activation);
-        else
-            layers[hiddenLayersAdded++] = new Layer(layers[hiddenLayersAdded - 1].perceptrons, perceptrons, activation);
+        if (hiddenLayersAdded == 0) {
+            layers[hiddenLayersAdded] = new Layer(this.inputSize, perceptrons, activation);
+        } else {
+            int prevIdx = hiddenLayersAdded - 1;
+            layers[hiddenLayersAdded] = new Layer(layers[prevIdx].perceptrons, perceptrons, activation);
+        }
 
+        hiddenLayersAdded++;
         return this;
     }
 
@@ -88,33 +96,26 @@ public class MultiLayerPerceptron {
                     String.format("Expected %d labels, but got %d.", dataX.size(), (dataY == null ? 0 : dataY.size())));
         }
 
-        SimpleMatrix yMatrix = new SimpleMatrix(dataY.size(), 1);
-
-        for (int i = 0; i < dataY.size(); i++) {
-            if (dataY.get(i) == null) {
-                throw new IllegalArgumentException("Labels cannot be null.");
-            }
-            if (dataY.get(i) < 0 || dataY.get(i) >= outputSize) {
-                throw new IllegalArgumentException("Labels must be in [0," + (outputSize - 1) + "]");
-            }
-            yMatrix.set(i, 0, dataY.get(i));
-        }
-
         for (int i = 0; i < epochs; i++) {
             for (int j = 0; j < dataX.size(); j++) {
-                SimpleMatrix x = Matrix.row(dataX.get(j));
+                SimpleMatrix x = Matrix.columnWithoutBias(dataX.get(j));
                 SimpleMatrix y = new SimpleMatrix(outputSize, 1);
 
                 double label = dataY.get(j);
                 y.set((int) label, 0, 1.0);
 
-                for (Layer layer : layers) {
+                for (Layer layer : layers)
                     x = layer.feedForward(x);
-                }
 
                 SimpleMatrix delta = lossFunction.apply(x, y);
                 for (int layerIdx = layers.length - 1; layerIdx >= 0; layerIdx--) {
-                    delta = layers[layerIdx].backpropagate(delta, learningRate, layerIdx != layers.length - 1);
+                    SimpleMatrix deltaPrev = layers[layerIdx].backpropagate(delta, learningRate);
+                    if (layerIdx > 0) {
+                        SimpleMatrix prevDeriv = layers[layerIdx - 1].getActivationDerivativeOfPreActivation();
+                        delta = deltaPrev.elementMult(prevDeriv);
+                    } else {
+                        delta = deltaPrev;
+                    }
                 }
             }
         }
@@ -133,7 +134,7 @@ public class MultiLayerPerceptron {
                     String.format("Expected %d features, but got %d.", inputSize, (x == null ? 0 : x.size())));
         }
 
-        SimpleMatrix xMatrix = Matrix.row(x);
+        SimpleMatrix xMatrix = Matrix.columnWithoutBias(x);
         for (Layer layer : layers) {
             xMatrix = layer.feedForward(xMatrix);
         }

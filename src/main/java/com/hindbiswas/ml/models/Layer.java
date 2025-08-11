@@ -22,16 +22,15 @@ class Layer {
         this.perceptrons = perceptrons;
         this.activation = activation;
 
-        this.weights = Matrix.random(this.perceptrons, inputs + 1, 0);
+        this.weights = Matrix.xavier(this.perceptrons, inputs + 1);
     }
 
     public SimpleMatrix feedForward(SimpleMatrix input) {
         this.input = new SimpleMatrix(this.inputs + 1, 1);
-
+        this.input.set(0, 0, 1);
         for (int i = 0; i < this.inputs; i++) {
-            this.input.set(i, 0, input.get(i, 0));
+            this.input.set(i + 1, 0, input.get(i, 0));
         }
-        this.input.set(this.inputs, 0, 1);
 
         preActivationOutput = weights.mult(this.input);
         activationOutput = activation.apply(preActivationOutput);
@@ -39,14 +38,21 @@ class Layer {
         return activationOutput;
     }
 
-    public SimpleMatrix backpropagate(SimpleMatrix delta, double learningRate, boolean derivate) {
+    public SimpleMatrix backpropagate(SimpleMatrix delta, double learningRate) {
+        // grad for this layer (perceptrons x (inputs+1))
         SimpleMatrix gradW = delta.mult(input.transpose());
+        // update weights including bias column (column 0)
         weights = weights.minus(gradW.scale(learningRate));
 
+        // compute W^T * delta -> size (inputs+1) x 1
         SimpleMatrix back = weights.transpose().mult(delta);
 
-        return derivate
-                ? back.elementMult(activation.derivative(preActivationOutput))
-                : back;
+        // drop the bias element (row 0) before sending delta to previous layer
+        SimpleMatrix backWithoutBias = back.extractMatrix(1, back.getNumRows(), 0, 1);
+        return backWithoutBias; // size inputs x 1
+    }
+
+    public SimpleMatrix getActivationDerivativeOfPreActivation() {
+        return activation.derivative(preActivationOutput);
     }
 }

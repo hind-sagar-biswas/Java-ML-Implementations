@@ -9,6 +9,8 @@ import org.ejml.simple.SimpleMatrix;
  * Matrix
  */
 public class Matrix {
+    private static final Random GLOBAL_RND = new Random();
+
     public static SimpleMatrix build(ArrayList<ArrayList<Double>> data) throws IllegalArgumentException {
         int rows = data.size();
         int cols = data.get(0).size() + 1;
@@ -44,6 +46,14 @@ public class Matrix {
         return new SimpleMatrix(dataArray.length, 1, true, dataArray);
     }
 
+    public static SimpleMatrix columnWithoutBias(ArrayList<Double> data) {
+        double[] dataArray = new double[data.size()];
+        for (int i = 0; i < data.size(); i++) {
+            dataArray[i] = data.get(i);
+        }
+        return new SimpleMatrix(dataArray.length, 1, true, dataArray);
+    }
+
     public static SimpleMatrix random(int m, int n, long seed) {
         Random rand = new Random(seed);
         SimpleMatrix matrix = new SimpleMatrix(m, n);
@@ -54,4 +64,16 @@ public class Matrix {
         }
         return matrix;
     }
+
+    public static SimpleMatrix xavier(int m, int n) {
+        SimpleMatrix matrix = new SimpleMatrix(m, n);
+        double scale = Math.sqrt(2.0 / (m + n - 1));
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                matrix.set(i, j, GLOBAL_RND.nextGaussian() * scale);
+            }
+        }
+        return matrix;
+    }
+
 }

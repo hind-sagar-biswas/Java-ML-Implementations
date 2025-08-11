@@ -12,7 +12,7 @@ public class LayerActivations {
         return new LayerActivation() {
             @Override
             public SimpleMatrix apply(SimpleMatrix x) {
-                return x.elementPower(-1).elementExp().plus(1).elementPower(-1);
+                return x.negative().elementExp().plus(1).elementPower(-1);
             }
 
             @Override
@@ -27,7 +27,7 @@ public class LayerActivations {
         return new LayerActivation() {
             @Override
             public SimpleMatrix apply(SimpleMatrix x) {
-                double max = x.elementMaxAbs();
+                double max = x.elementMax();
                 SimpleMatrix stabilized = x.minus(max);
                 SimpleMatrix exp = stabilized.elementExp();
                 double sum = exp.elementSum();

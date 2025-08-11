@@ -9,7 +9,6 @@ package com.hindbiswas.ml.models;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Random;
 
 import org.ejml.simple.SimpleMatrix;
 
