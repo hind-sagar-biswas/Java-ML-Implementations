@@ -9,7 +9,9 @@ import java.util.*;
 /**
  * Utility to load Iris CSV and split into train/test sets.
  */
-public class BinaryDataLoader {
+public final class BinaryDataLoader {
+    private BinaryDataLoader() {}
+
     public static Map<String, Dataset> loadAndSplit(String csvPath, long seed, String label1, String label2)
             throws IOException, CsvValidationException {
 

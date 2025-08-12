@@ -28,7 +28,10 @@ public class MultiLayerPerceptron {
     private final double learningRate;
 
     private LossGradient lossGradient = null;
-    private LossFunction lossFuncton = null;
+    private LossFunction lossFunction = null;
+
+    private String lossGradientName = null;
+    private String lossFunctionName = null;
 
     private int epochs = 1;
     private int batchSize = 1;
@@ -48,7 +51,9 @@ public class MultiLayerPerceptron {
         this.batchSize = dto.batchSize;
         this.validationSplit = dto.validationSplit;
         this.lossGradient = LossGradients.resolve(dto.lossGradientName);
-        this.lossFuncton = LossFunctions.resolve(dto.lossFunctionName);
+        this.lossFunction = LossFunctions.resolve(dto.lossFunctionName);
+        this.lossGradientName = dto.lossGradientName;
+        this.lossFunctionName = dto.lossFunctionName;
         this.layers = new Layer[dto.layers.size()];
         this.fitted = true;
         for (int i = 0; i < dto.layers.size(); i++) {
@@ -89,8 +94,11 @@ public class MultiLayerPerceptron {
 
         this.layers = new Layer[hiddenLayers + 1];
 
-        this.lossGradient = LossGradients.resolve(LossGradients.softmaxCrossEntropy());
-        this.lossFuncton = LossFunctions.resolve(LossFunctions.sse());
+        this.lossGradientName = LossGradients.softmaxCrossEntropy();
+        this.lossFunctionName = LossFunctions.sse();
+
+        this.lossGradient = LossGradients.resolve(this.lossGradientName);
+        this.lossFunction = LossFunctions.resolve(this.lossFunctionName);
     }
 
     public MultiLayerPerceptron layer(int perceptrons, String activation)
@@ -137,7 +145,7 @@ public class MultiLayerPerceptron {
         if (fitted) {
             throw new IllegalStateException("Model has already been fitted.");
         }
-        this.lossFuncton = LossFunctions.resolve(lossFunction);
+        this.lossFunction = LossFunctions.resolve(lossFunction);
         return this;
     }
 
@@ -179,6 +187,10 @@ public class MultiLayerPerceptron {
         int valSize = (int) (n * validationSplit);
         List<Integer> valIndices = allIndices.subList(0, valSize);
         List<Integer> trainIndices = allIndices.subList(valSize, n);
+
+        double bestValLoss = Double.POSITIVE_INFINITY;
+        int patience = 5;
+        int epochsWithoutImprovement = 0;
 
         for (int epoch = 0; epoch < epochs; epoch++) {
             Collections.shuffle(trainIndices, new Random());
@@ -237,7 +249,7 @@ public class MultiLayerPerceptron {
                     SimpleMatrix y = new SimpleMatrix(outputSize, 1);
                     y.set(dataY.get(idx).intValue(), 0, 1.0);
 
-                    totalValLoss += this.lossFuncton.apply(x, y);
+                    totalValLoss += this.lossFunction.apply(x, y);
 
                     // accuracy
                     int predIdx = 0;
@@ -256,6 +268,17 @@ public class MultiLayerPerceptron {
                 double valAcc = (double) correct / valIndices.size();
 
                 System.out.printf("Epoch %d/%d — val_loss=%.6f val_acc=%.4f\n", epoch + 1, epochs, avgValLoss, valAcc);
+
+                if (avgValLoss < bestValLoss) {
+                    bestValLoss = avgValLoss;
+                    epochsWithoutImprovement = 0;
+                } else {
+                    epochsWithoutImprovement++;
+                    if (epochsWithoutImprovement >= patience) {
+                        System.out.println("Early stopping triggered.");
+                        break;
+                    }
+                }
             } else {
                 System.out.printf("Epoch %d/%d — no validation set (validationSplit=%.3f)\n", epoch + 1, epochs,
                         validationSplit);
@@ -311,10 +334,46 @@ public class MultiLayerPerceptron {
         return output;
     }
 
+    public double score(ArrayList<ArrayList<Double>> dataX, ArrayList<Double> dataY)
+            throws IllegalArgumentException, IllegalStateException {
+        if (!fitted) {
+            throw new IllegalStateException("Model has not been fitted yet.");
+        }
+        if (dataX == null || dataX.get(0).size() != inputSize) {
+            throw new IllegalArgumentException(
+                    String.format("Expected %d features, but got %d.", inputSize,
+                            (dataX == null ? 0 : dataX.get(0).size())));
+        }
+        if (dataY == null || dataY.size() != dataX.size()) {
+            throw new IllegalArgumentException(
+                    String.format("Expected %d labels, but got %d.", dataX.size(), (dataY == null ? 0 : dataY.size())));
+        }
+        int correct = 0;
+        for (int i = 0; i < dataX.size(); i++) {
+            ArrayList<Double> x = dataX.get(i);
+            int actual = dataY.get(i).intValue();
+            ArrayList<Double> predicted = predict(x);
+            int predictedIdx = 0;
+            double best = predicted.get(0);
+            for (int j = 1; j < predicted.size(); j++) {
+                if (predicted.get(j) > best) {
+                    best = predicted.get(j);
+                    predictedIdx = j;
+                }
+            }
+            if (predictedIdx == actual) {
+                correct++;
+            }
+        }
+        return (double) correct / dataX.size();
+    }
+
     public boolean export(Path path) {
+        System.out.println("Exporting model to " + path);
         try {
             String json = toString();
             Files.write(path, json.getBytes(StandardCharsets.UTF_8));
+            System.out.println("Model exported to " + path);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -324,10 +383,12 @@ public class MultiLayerPerceptron {
         }
     }
 
-    public MultiLayerPerceptron importModel(Path path) throws Exception {
+    public static MultiLayerPerceptron importModel(Path path) throws Exception {
+        System.out.println("Importing model from " + path);
         String json = Files.readString(path, StandardCharsets.UTF_8);
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         MLPModelDTO dto = gson.fromJson(json, MLPModelDTO.class);
+        System.out.println("Model imported from " + path);
         return new MultiLayerPerceptron(dto);
     }
 
@@ -340,8 +401,8 @@ public class MultiLayerPerceptron {
         dto.epochs = epochs;
         dto.batchSize = batchSize;
         dto.validationSplit = validationSplit;
-        dto.lossGradientName = lossGradient.toString();
-        dto.lossFunctionName = lossFuncton.toString();
+        dto.lossGradientName = lossGradientName;
+        dto.lossFunctionName = lossFunctionName;
         for (Layer layer : layers) {
             dto.layers.add(layer.toDTO());
         }
