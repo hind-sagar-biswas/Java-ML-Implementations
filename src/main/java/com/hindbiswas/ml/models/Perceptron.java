@@ -21,7 +21,7 @@ import com.hindbiswas.ml.util.Matrix;
 /**
  * Implements the classic perceptron algorithm for linearly separable data.
  */
-public class Perceptron {
+public class Perceptron implements Model {
     /** Learning rate (α) used to scale weight updates. */
     private Double learningRate = 0.01;
     /** Maximum number of epochs to run if data never perfectly separates. */
@@ -153,6 +153,7 @@ public class Perceptron {
      * @throws IllegalArgumentException if data sizes mismatch, empty, or invalid
      *                                  labels
      */
+    @Override
     public Perceptron fit(DataFrame df) throws IllegalArgumentException {
         df = Objects.requireNonNull(df, "DataFrame is null.");
 
@@ -238,6 +239,7 @@ public class Perceptron {
      * @return predicted label (+1 or -1)
      * @throws IllegalStateException if model has not been fitted
      */
+    @Override
     public Integer predict(double[] x) throws IllegalStateException {
         if (theta == null) {
             throw new IllegalStateException("Model has not been fitted yet.");
@@ -257,7 +259,8 @@ public class Perceptron {
      * @throws IllegalStateException if model has not been fitted
      * @throws NullPointerException  if DataFrame is null
      */
-    public Double score(DataFrame df) throws IllegalStateException, NullPointerException {
+    @Override
+    public double score(DataFrame df) throws IllegalStateException, NullPointerException {
         if (theta == null) {
             throw new IllegalStateException("Model has not been fitted yet.");
         }

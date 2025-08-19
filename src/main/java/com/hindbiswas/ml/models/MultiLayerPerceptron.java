@@ -4,8 +4,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
@@ -24,7 +22,7 @@ import com.hindbiswas.ml.util.Matrix;
 /**
  * MultiLayerPerceptron
  */
-public class MultiLayerPerceptron {
+public class MultiLayerPerceptron implements Model {
     private final int inputSize;
     private final int hiddenLayers;
     private final int outputSize;
@@ -152,6 +150,7 @@ public class MultiLayerPerceptron {
         return this;
     }
 
+    @Override
     public MultiLayerPerceptron fit(DataFrame df)
             throws IllegalArgumentException, IllegalStateException, NullPointerException {
         if (hiddenLayersAdded != layers.length) {
@@ -307,6 +306,7 @@ public class MultiLayerPerceptron {
         return output;
     }
 
+    @Override
     public ArrayList<Double> predict(double[] x) throws IllegalArgumentException, IllegalStateException {
         if (!fitted) {
             throw new IllegalStateException("Model has not been fitted yet.");
@@ -352,6 +352,7 @@ public class MultiLayerPerceptron {
         return output;
     }
 
+    @Override
     public double score(DataFrame df)
             throws IllegalArgumentException, IllegalStateException, NullPointerException {
         if (!fitted) {
