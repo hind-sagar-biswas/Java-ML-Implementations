@@ -10,9 +10,10 @@ import java.util.*;
  * Utility to load Iris CSV and split into train/test sets.
  */
 public final class BinaryDataLoader {
-    private BinaryDataLoader() {}
+    private BinaryDataLoader() {
+    }
 
-    public static Map<String, Dataset> loadAndSplit(String csvPath, long seed, String label1, String label2)
+    public static Map<String, DataFrame> loadAndSplit(String csvPath, long seed, String label1, String label2)
             throws IOException, CsvValidationException {
 
         List<String[]> rows = new ArrayList<>();
@@ -33,16 +34,16 @@ public final class BinaryDataLoader {
         List<String[]> trainRows = rows.subList(0, splitIndex);
         List<String[]> testRows = rows.subList(splitIndex, rows.size());
 
-        Dataset train = toDataset(trainRows, label1);
-        Dataset test = toDataset(testRows, label1);
+        DataFrame train = toDataFrame(trainRows, label1);
+        DataFrame test = toDataFrame(testRows, label1);
 
-        Map<String, Dataset> map = new HashMap<>();
+        Map<String, DataFrame> map = new HashMap<>();
         map.put("train", train);
         map.put("test", test);
         return map;
     }
 
-    private static Dataset toDataset(List<String[]> rows, String label1) {
+    private static DataFrame toDataFrame(List<String[]> rows, String label1) {
         ArrayList<ArrayList<Double>> X = new ArrayList<>();
         ArrayList<Double> y = new ArrayList<>();
 
@@ -60,6 +61,7 @@ public final class BinaryDataLoader {
             y.add(label);
         }
 
-        return new Dataset(X, y);
+        DataFrame df = new DataFrame(X.get(0).size());
+        return df.add(X, y);
     }
 }

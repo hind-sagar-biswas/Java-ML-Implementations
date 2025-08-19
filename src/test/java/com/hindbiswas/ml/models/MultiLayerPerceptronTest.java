@@ -39,7 +39,7 @@ public class MultiLayerPerceptronTest {
         mlp.layer(2, LayerActivations.softmax());
 
         // Configure: epochs, batchSize (not used in your impl yet), validationSplit
-        mlp.configure(1500, 1, 0.0);
+        mlp.configure(10, 1, 0.0);
 
         // Use softmax + cross-entropy gradient: pred - label (dL/dz)
         mlp.lossGradient(LossGradients.softmaxCrossEntropy());

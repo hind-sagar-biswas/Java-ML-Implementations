@@ -7,6 +7,7 @@ import java.util.Scanner;
 import java.util.concurrent.ForkJoinPool;
 
 import com.hindbiswas.ml.data.BinaryDataLoader;
+import com.hindbiswas.ml.data.DataFrame;
 import com.hindbiswas.ml.data.Dataset;
 import com.hindbiswas.ml.data.MNISTDataLoader;
 import com.hindbiswas.ml.models.MultiLayerPerceptron;
@@ -20,7 +21,7 @@ import com.opencsv.exceptions.CsvValidationException;
  *
  */
 public class App {
-    public static void main(String[] args) {
+    public static void mlp() {
         try {
             String mlpPath = "/home/shinigami/Documents/image_mlp.json";
             Scanner sc = new Scanner(System.in);
@@ -51,11 +52,11 @@ public class App {
     public static void mlpTrain(String export) {
         try {
             System.out.println("Loading dataset...");
-            Map<String, Dataset> data = MNISTDataLoader.load(
+            Map<String, DataFrame> data = MNISTDataLoader.load(
                     "/home/shinigami/Documents/mnist_train.csv", 10000,
                     "/home/shinigami/Documents/mnist_test.csv", 5000);
-            Dataset train = data.get("train");
-            Dataset test = data.get("test");
+            DataFrame train = data.get("train");
+            DataFrame test = data.get("test");
 
             System.out.println("Preparing model...");
             MultiLayerPerceptron mlp = new MultiLayerPerceptron(784, 3, 10);
@@ -67,11 +68,11 @@ public class App {
             mlp.lossGradient(LossGradients.softmaxCrossEntropy());
 
             System.out.println("Training model...");
-            mlp.fit(train.X, train.y);
+            mlp.fit(train);
 
             System.out.println("Evaluating model...");
-            System.out.println("Train accuracy: " + mlp.score(train.X, train.y));
-            System.out.println("Test  accuracy: " + mlp.score(test.X, test.y));
+            System.out.println("Train accuracy: " + mlp.score(train));
+            System.out.println("Test  accuracy: " + mlp.score(test));
 
             mlp.export(Paths.get(export));
         } catch (Exception e) {
@@ -83,13 +84,13 @@ public class App {
         try {
             System.out.println("Loading model...");
             MultiLayerPerceptron mlp = MultiLayerPerceptron.importModel(Paths.get(path));
-            Map<String, Dataset> data = MNISTDataLoader.load(
+            Map<String, DataFrame> data = MNISTDataLoader.load(
                     "/home/shinigami/Documents/mnist_train.csv", 1,
                     "/home/shinigami/Documents/mnist_test.csv", 10000);
-            Dataset test = data.get("test");
-            Dataset train = data.get("train");
+            DataFrame test = data.get("test");
+            DataFrame train = data.get("train");
 
-            System.out.println("Test  accuracy: " + mlp.score(test.X, test.y));
+            System.out.println("Test  accuracy: " + mlp.score(test));
             return;
         } catch (Exception e) {
             e.printStackTrace();
@@ -100,7 +101,7 @@ public class App {
     public static void perceptron() {
         String csv = "/home/shinigami/Downloads/iris.csv";
 
-        Map<String, Dataset> data;
+        Map<String, DataFrame> data;
 
         try {
             data = BinaryDataLoader.loadAndSplit(csv, 42L, "setosa", "versicolor");
@@ -109,22 +110,15 @@ public class App {
             return;
         }
 
-        Dataset train = data.get("train");
-        Dataset test = data.get("test");
+        DataFrame train = data.get("train");
+        DataFrame test = data.get("test");
 
         Perceptron model = new Perceptron().shuffle(true).verbose(true);
 
-        model.fit(train.X, train.y);
+        model.fit(train);
 
         System.out.println(model);
-        System.out.println("Train accuracy: " + model.score(train.X, train.y));
-        System.out.println("Test  accuracy: " + model.score(test.X, test.y));
-
-        for (int i = 0; i < test.X.size(); i++) {
-            int predicted = model.predict(test.X.get(i));
-            int actual = test.y.get(i).intValue();
-
-            System.out.printf("Sample %d: Predicted=%d, Actual=%d%n", i, predicted, actual);
-        }
+        System.out.println("Train accuracy: " + model.score(train));
+        System.out.println("Test  accuracy: " + model.score(test));
     }
 }

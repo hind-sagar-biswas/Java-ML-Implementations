@@ -9,9 +9,13 @@ package com.hindbiswas.ml.models;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Objects;
+import java.util.Random;
 
 import org.ejml.simple.SimpleMatrix;
 
+import com.hindbiswas.ml.data.DataFrame;
+import com.hindbiswas.ml.data.DataPoint;
 import com.hindbiswas.ml.util.Matrix;
 
 /**
@@ -144,44 +148,37 @@ public class Perceptron {
     /**
      * Trains the perceptron on provided features and labels.
      * 
-     * @param dataX list of feature vectors (each inner list is one example)
-     * @param dataY list of labels, each must be -1 or +1
+     * @param df DataFrame containing features and labels
      * @return this perceptron instance
      * @throws IllegalArgumentException if data sizes mismatch, empty, or invalid
      *                                  labels
      */
-    public Perceptron fit(
-            ArrayList<ArrayList<Double>> dataX,
-            ArrayList<Double> dataY) throws IllegalArgumentException {
-        if (dataX.size() != dataY.size() || dataX.isEmpty()) {
-            throw new IllegalArgumentException("Data arrays must be of the same non-zero length.");
-        }
-        if (dataX.get(0).isEmpty()) {
+    public Perceptron fit(DataFrame df) throws IllegalArgumentException {
+        df = Objects.requireNonNull(df, "DataFrame is null.");
+
+        if (df.size() == 0) {
             throw new IllegalArgumentException("Features must be non-empty.");
         }
-        for (Double y : dataY) {
+        for (Double y : df.getLabels()) {
             if (y != -1 && y != 1) {
                 throw new IllegalArgumentException("DataY values must be either -1 or 1.");
             }
         }
 
-        int m = dataX.size();
-        int n = dataX.get(0).size() + 1; // +1 for bias term
+        int n = df.featureCount() + 1; // +1 for bias term
 
         seedWeights(n);
+
+        Random rng = weightSeed == null ? new Random() : new Random(weightSeed);
 
         for (int epoch = 0; epoch < iterations; epoch++) {
             boolean failed = false;
 
-            ArrayList<Integer> indices = new ArrayList<>();
-            for (int i = 0; i < m; i++)
-                indices.add(i);
-            if (shuffle)
-                Collections.shuffle(indices);
+            df.shuffle(rng.nextInt());
 
-            for (int idx : indices) {
-                SimpleMatrix inputs = Matrix.column(dataX.get(idx));
-                double expected = dataY.get(idx);
+            for (DataPoint dp : df) {
+                SimpleMatrix inputs = Matrix.column(dp.features);
+                double expected = dp.label;
 
                 // raw activation
                 double raw = theta.transpose().mult(inputs).get(0, 0);
@@ -235,29 +232,54 @@ public class Perceptron {
     }
 
     /**
-     * Computes classification accuracy on a labeled dataset.
+     * Predicts the label for a single feature vector.
      * 
-     * @param dataX list of feature vectors
-     * @param dataY list of true labels
-     * @return fraction of correct predictions in [0.0, 1.0]
+     * @param x feature vector (without bias term)
+     * @return predicted label (+1 or -1)
      * @throws IllegalStateException if model has not been fitted
      */
-    public Double score(ArrayList<ArrayList<Double>> dataX, ArrayList<Double> dataY) {
+    public Integer predict(double[] x) throws IllegalStateException {
         if (theta == null) {
             throw new IllegalStateException("Model has not been fitted yet.");
         }
-        if (dataX.size() != dataY.size() || dataX.isEmpty()) {
-            throw new IllegalArgumentException("Data arrays must be of the same non-zero length.");
+
+        SimpleMatrix xMatrix = Matrix.row(x);
+        double p = xMatrix.mult(theta).get(0, 0);
+
+        return (int) activation.apply(p);
+    }
+
+    /**
+     * Computes classification accuracy on a labeled dataset.
+     * 
+     * @param df DataFrame containing features and labels
+     * @return fraction of correct predictions in [0.0, 1.0]
+     * @throws IllegalStateException if model has not been fitted
+     * @throws NullPointerException  if DataFrame is null
+     */
+    public Double score(DataFrame df) throws IllegalStateException, NullPointerException {
+        if (theta == null) {
+            throw new IllegalStateException("Model has not been fitted yet.");
+        }
+        df = Objects.requireNonNull(df, "DataFrame is null.");
+
+        if (df.size() == 0) {
+            throw new IllegalArgumentException("Features must be non-empty.");
+        }
+        for (Double y : df.getLabels()) {
+            if (y != -1 && y != 1) {
+                throw new IllegalArgumentException("DataY values must be either -1 or 1.");
+            }
         }
 
         int correct = 0;
-        for (int i = 0; i < dataX.size(); i++) {
-            int prediction = predict(dataX.get(i));
-            if (prediction == dataY.get(i).intValue()) {
+        for (DataPoint dp : df) {
+            int prediction = predict(dp.features);
+            if (prediction == (int) dp.label) {
                 correct++;
             }
         }
-        return (double) correct / dataX.size();
+        return (double) correct / df.size();
     }
 
     /**

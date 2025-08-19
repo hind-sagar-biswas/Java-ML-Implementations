@@ -206,23 +206,23 @@ public class DataFrame implements Cloneable, RandomAccess, Iterable<DataPoint> {
             throw new IllegalArgumentException("DataFrame cannot be null.");
         }
 
-        int[] dimensions = df.dimensions();
-        if (dimensions[1] - 1 != featureCount) {
+        int[] shape = df.shape();
+        if (shape[1] - 1 != featureCount) {
             throw new IllegalArgumentException("Feature count does not match the DataFrame's feature count.");
         }
 
-        adjust(dimensions[0]);
+        adjust(shape[0]);
 
         double[][] features = df.getFeatures();
         double[] labels = df.getLabels();
 
-        for (int i = 0; i < dimensions[0]; i++) {
+        for (int i = 0; i < shape[0]; i++) {
             for (int j = 0; j < featureCount; j++) {
                 featureElementData[length + i][j] = features[i][j];
             }
             labelElementData[length + i] = labels[i];
         }
-        length += dimensions[0];
+        length += shape[0];
 
         return this;
     }
@@ -272,7 +272,7 @@ public class DataFrame implements Cloneable, RandomAccess, Iterable<DataPoint> {
         return featureCount;
     }
 
-    public int[] dimensions() {
+    public int[] shape() {
         return new int[] { length, featureCount + 1 };
     }
 

@@ -39,7 +39,7 @@ class DataFrameTest {
     @Test
     void testDimensionsAndSize() {
         assertEquals(6, df3.size());
-        int[] dims = df3.dimensions();
+        int[] dims = df3.shape();
         assertArrayEquals(new int[] { 6, 4 }, dims); // 3 features + 1 label
     }
 

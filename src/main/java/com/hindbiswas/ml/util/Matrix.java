@@ -37,11 +37,29 @@ public class Matrix {
         return new SimpleMatrix(1, dataArray.length, true, dataArray);
     }
 
+    public static SimpleMatrix row(double[] data) {
+        double[] dataArray = new double[data.length + 1];
+        dataArray[0] = 1.0;
+        for (int i = 0; i < data.length; i++) {
+            dataArray[i + 1] = data[i];
+        }
+        return new SimpleMatrix(1, dataArray.length, true, dataArray);
+    }
+
     public static SimpleMatrix column(ArrayList<Double> data) {
         double[] dataArray = new double[data.size() + 1];
         dataArray[0] = 1.0;
         for (int i = 0; i < data.size(); i++) {
             dataArray[i + 1] = data.get(i);
+        }
+        return new SimpleMatrix(dataArray.length, 1, true, dataArray);
+    }
+
+    public static SimpleMatrix column(double[] data) {
+        double[] dataArray = new double[data.length + 1];
+        dataArray[0] = 1.0;
+        for (int i = 0; i < data.length; i++) {
+            dataArray[i + 1] = data[i];
         }
         return new SimpleMatrix(dataArray.length, 1, true, dataArray);
     }

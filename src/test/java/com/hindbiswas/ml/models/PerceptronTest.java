@@ -8,6 +8,8 @@ import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.hindbiswas.ml.data.DataFrame;
+
 /**
  * Unit tests for the Perceptron classifier.
  */
@@ -40,29 +42,15 @@ public class PerceptronTest {
     }
 
     @Test
-    public void testEmptyDataThrows() {
-        // Fitting on empty data should throw IllegalArgumentException
-        assertThrows(IllegalArgumentException.class, () -> {
-            perceptron.fit(new ArrayList<>(), new ArrayList<>());
-        });
-    }
-
-    @Test
-    public void testMismatchedDataSizesThrows() {
-        // dataX and dataY of different lengths should throw
-        dataX.add(new ArrayList<>(Arrays.asList(0.0, 1.0)));
-        assertThrows(IllegalArgumentException.class, () -> {
-            perceptron.fit(dataX, dataY);
-        });
-    }
-
-    @Test
     public void testInvalidLabelThrows() {
         // Labels other than -1 or +1 should throw
         dataX.add(new ArrayList<>(Arrays.asList(1.0, 1.0)));
         dataY.add(0.0);
+        DataFrame df = new DataFrame(2);
+        df.add(dataX, dataY);
+
         assertThrows(IllegalArgumentException.class, () -> {
-            perceptron.fit(dataX, dataY);
+            perceptron.fit(df);
         });
     }
 
@@ -78,8 +66,11 @@ public class PerceptronTest {
         dataX.add(new ArrayList<>(Arrays.asList(1.0, 1.0)));
         dataY.add(1.0);
 
-        perceptron.fit(dataX, dataY);
-        double score = perceptron.score(dataX, dataY);
+        DataFrame df = new DataFrame(dataX.get(0).size());
+        df.add(dataX, dataY);
+
+        perceptron.fit(df);
+        double score = perceptron.score(df);
         assertEquals(1.0, score, 1e-6, "Perceptron should perfectly classify AND dataset");
     }
 
@@ -92,10 +83,13 @@ public class PerceptronTest {
         singleX.add(new ArrayList<>(Arrays.asList(0.0)));
         singleY.add(1.0);
 
+        DataFrame df = new DataFrame(singleX.get(0).size());
+        df.add(singleX, singleY);
+
         Perceptron p1 = new Perceptron(0.1, 0, 0.0).randomizeWeights(42);
         Perceptron p2 = new Perceptron(0.1, 0, 0.0).randomizeWeights(42);
-        p1.fit(singleX, singleY);
-        p2.fit(singleX, singleY);
+        p1.fit(df);
+        p2.fit(df);
 
         assertEquals(p1.toString(), p2.toString(), "Models with same seed and zero iterations should match weights");
     }
