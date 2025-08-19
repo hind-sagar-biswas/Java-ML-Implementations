@@ -42,7 +42,7 @@ public final class MNISTDataLoader {
      * @throws IllegalArgumentException if validation fails (missing files,
      *                                  inconsistent columns, bad numbers)
      */
-    public static Map<String, Dataset> load(String trainCsvPath, String testCsvPath, int limit)
+    public static Map<String, DataFrame> load(String trainCsvPath, String testCsvPath, int limit)
             throws IOException, IllegalArgumentException {
         Path trainPath = Paths.get(trainCsvPath);
         Path testPath = Paths.get(testCsvPath);
@@ -50,10 +50,10 @@ public final class MNISTDataLoader {
         validatePath(trainPath, "train");
         validatePath(testPath, "test");
 
-        Dataset train = loadCsv(trainPath, limit);
-        Dataset test = loadCsv(testPath, limit);
+        DataFrame train = loadCsv(trainPath, limit);
+        DataFrame test = loadCsv(testPath, limit);
 
-        Map<String, Dataset> result = new HashMap<>();
+        Map<String, DataFrame> result = new HashMap<>();
         result.put("train", train);
         result.put("test", test);
         return result;
@@ -74,7 +74,7 @@ public final class MNISTDataLoader {
      * @throws IllegalArgumentException if validation fails (missing files,
      *                                  inconsistent columns, bad numbers)
      */
-    public static Map<String, Dataset> load(String trainCsvPath, int trainLimit, String testCsvPath, int testLimit)
+    public static Map<String, DataFrame> load(String trainCsvPath, int trainLimit, String testCsvPath, int testLimit)
             throws IOException, IllegalArgumentException {
         Path trainPath = Paths.get(trainCsvPath);
         Path testPath = Paths.get(testCsvPath);
@@ -82,17 +82,17 @@ public final class MNISTDataLoader {
         validatePath(trainPath, "train");
         validatePath(testPath, "test");
 
-        Dataset train = loadCsv(trainPath, trainLimit);
-        Dataset test = loadCsv(testPath, testLimit);
+        DataFrame train = loadCsv(trainPath, trainLimit);
+        DataFrame test = loadCsv(testPath, testLimit);
 
-        Map<String, Dataset> result = new HashMap<>();
+        Map<String, DataFrame> result = new HashMap<>();
         result.put("train", train);
         result.put("test", test);
         return result;
     }
 
     /** Backwards-compatible convenience: load all rows from both files. */
-    public static Map<String, Dataset> load(String trainCsvPath, String testCsvPath)
+    public static Map<String, DataFrame> load(String trainCsvPath, String testCsvPath)
             throws IOException, IllegalArgumentException {
         return load(trainCsvPath, testCsvPath, 0);
     }
@@ -109,7 +109,7 @@ public final class MNISTDataLoader {
     /**
      * Loads up to `limit` rows from path. If limit <= 0 -> loads all rows.
      */
-    private static Dataset loadCsv(Path path, int limit) throws IOException, IllegalArgumentException {
+    private static DataFrame loadCsv(Path path, int limit) throws IOException, IllegalArgumentException {
         ArrayList<ArrayList<Double>> X = new ArrayList<>();
         ArrayList<Double> y = new ArrayList<>();
 
@@ -194,6 +194,7 @@ public final class MNISTDataLoader {
                     pixelCount);
         }
 
-        return new Dataset(X, y);
+        DataFrame df = new DataFrame(X.get(0).size());
+        return df.add(X, y);
     }
 }
