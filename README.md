@@ -11,6 +11,11 @@ A lightweight Java library implementing common Machine Learning models using cor
 * **Perceptron** (`Perceptron`)
 * **Multi Layer Perceptron** (`MultiLayerPerceptron`)
 
+## Data Structures
+
+* **Data Frame** (`DataFrame`)
+* **Data Point** (`DataPoint`)
+
 ## Installation
 
 1. **Clone the repository**
