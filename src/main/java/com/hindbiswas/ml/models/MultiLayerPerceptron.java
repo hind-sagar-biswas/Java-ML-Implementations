@@ -21,6 +21,28 @@ import com.hindbiswas.ml.util.Matrix;
 
 /**
  * MultiLayerPerceptron
+ *
+ * <p>
+ * Feed-forward multi-layer perceptron classifier with manual training loop.
+ * Supports configuring layers, training via {@link #fit(DataFrame)}, predicting
+ * single examples, scoring on a {@link DataFrame}, exporting/importing model
+ * configuration, and converting the model to a DTO for serialization.
+ * </p>
+ *
+ * <p>
+ * Typical usage:
+ * 
+ * <pre>
+ * MultiLayerPerceptron mlp = new MultiLayerPerceptron(inputSize, hiddenLayers, outputSize, learningRate)
+ *         .layer(64, "relu") // add hidden layers and output layer(s)
+ *         .layer(32, "relu")
+ *         .layer(outputSize, "softmax"); // final layer
+ *
+ * mlp.configure(epochs, batchSize, validationSplit);
+ * mlp.fit(trainingDataFrame);
+ * double acc = mlp.score(testDataFrame);
+ * </pre>
+ * </p>
  */
 public class MultiLayerPerceptron implements Model {
     private final int inputSize;
@@ -43,6 +65,11 @@ public class MultiLayerPerceptron implements Model {
 
     private boolean fitted = false;
 
+    /**
+     * Construct a model from a DTO (used for import).
+     *
+     * @param dto DTO containing model architecture and configuration
+     */
     public MultiLayerPerceptron(MLPModelDTO dto) {
         this.inputSize = dto.inputSize;
         this.hiddenLayers = dto.hiddenLayers;
@@ -63,14 +90,45 @@ public class MultiLayerPerceptron implements Model {
         }
     }
 
+    /**
+     * Create a new MLP with default learning rate of 0.01.
+     *
+     * @param inputSize    number of input features
+     * @param hiddenLayers number of hidden layers (does not include output layer)
+     * @param outputSize   number of outputs / classes
+     */
     public MultiLayerPerceptron(int inputSize, int hiddenLayers, int outputSize) {
         this(inputSize, hiddenLayers, outputSize, 0.01);
     }
 
+    /**
+     * Convenience constructor that accepts arrays of perceptron counts and
+     * activation names.
+     * The last entry of {@code perceptrons} is treated as the final (output) layer
+     * size.
+     *
+     * @param inputSize   number of input features
+     * @param perceptrons array of perceptron counts per layer (includes final
+     *                    layer)
+     * @param activations array of activation names for each layer (same length as
+     *                    perceptrons)
+     * @throws IllegalArgumentException if arrays lengths mismatch or are empty
+     */
     public MultiLayerPerceptron(int inputSize, int[] perceptrons, String[] activations) {
         this(inputSize, perceptrons, activations, 0.01);
     }
 
+    /**
+     * Convenience constructor that accepts arrays and a custom learning rate.
+     *
+     * @param inputSize    number of input features
+     * @param perceptrons  array of perceptron counts per layer (includes final
+     *                     layer)
+     * @param activations  array of activation names for each layer (same length as
+     *                     perceptrons)
+     * @param learningRate learning rate used during training
+     * @throws IllegalArgumentException if arrays lengths mismatch or are empty
+     */
     public MultiLayerPerceptron(int inputSize, int[] perceptrons, String[] activations, double learningRate) {
         this(inputSize, perceptrons.length, perceptrons[perceptrons.length - 1], learningRate);
 
@@ -87,6 +145,14 @@ public class MultiLayerPerceptron implements Model {
         }
     }
 
+    /**
+     * Core constructor.
+     *
+     * @param inputSize    number of input features
+     * @param hiddenLayers number of hidden layers (not counting output layer)
+     * @param outputSize   number of outputs / classes
+     * @param learningRate learning rate for gradient updates
+     */
     public MultiLayerPerceptron(int inputSize, int hiddenLayers, int outputSize, double learningRate) {
         this.inputSize = inputSize;
         this.hiddenLayers = hiddenLayers;
@@ -102,6 +168,23 @@ public class MultiLayerPerceptron implements Model {
         this.lossFunction = LossFunctions.resolve(this.lossFunctionName);
     }
 
+    /**
+     * Add a layer to the model.
+     *
+     * <p>
+     * The first invocation adds a layer that connects from the model
+     * {@code inputSize};
+     * subsequent invocations connect from the previous layer's size.
+     * </p>
+     *
+     * @param perceptrons number of units in the new layer
+     * @param activation  activation function name (resolved via
+     *                    {@link LayerActivations})
+     * @return this model (for fluent chaining)
+     * @throws IllegalStateException    if maximum number of layers has been reached
+     * @throws IllegalArgumentException if activation is invalid (resolved by
+     *                                  LayerActivations)
+     */
     public MultiLayerPerceptron layer(int perceptrons, String activation)
             throws IllegalStateException, IllegalArgumentException {
         if (hiddenLayersAdded == layers.length) {
@@ -121,6 +204,15 @@ public class MultiLayerPerceptron implements Model {
         return this;
     }
 
+    /**
+     * Configure training hyper-parameters.
+     *
+     * @param epochs          number of epochs to train
+     * @param batchSize       mini-batch size
+     * @param validationSplit fraction of data used for validation (0.0 - 1.0)
+     * @return this model (for fluent chaining)
+     * @throws IllegalStateException if the model has already been fitted
+     */
     public MultiLayerPerceptron configure(int epochs, int batchSize, double validationSplit)
             throws IllegalStateException {
         if (fitted) {
@@ -133,6 +225,14 @@ public class MultiLayerPerceptron implements Model {
         return this;
     }
 
+    /**
+     * Set the loss gradient function by name.
+     *
+     * @param lossGradient loss gradient name (resolved via {@link LossGradients})
+     * @return this model (for fluent chaining)
+     * @throws IllegalArgumentException if the name cannot be resolved
+     * @throws IllegalStateException    if the model has already been fitted
+     */
     public MultiLayerPerceptron lossGradient(String lossGradient)
             throws IllegalArgumentException, IllegalStateException {
         if (fitted) {
@@ -142,6 +242,14 @@ public class MultiLayerPerceptron implements Model {
         return this;
     }
 
+    /**
+     * Set the loss function by name.
+     *
+     * @param lossFunction loss function name (resolved via {@link LossFunctions})
+     * @return this model (for fluent chaining)
+     * @throws IllegalArgumentException if the name cannot be resolved
+     * @throws IllegalStateException    if the model has already been fitted
+     */
     public MultiLayerPerceptron loss(String lossFunction) throws IllegalArgumentException, IllegalStateException {
         if (fitted) {
             throw new IllegalStateException("Model has already been fitted.");
@@ -150,6 +258,30 @@ public class MultiLayerPerceptron implements Model {
         return this;
     }
 
+    /**
+     * Fit the model to the provided {@link DataFrame}.
+     *
+     * <p>
+     * This method will:
+     * </p>
+     * <ul>
+     * <li>validate model and dataframe compatibility</li>
+     * <li>split the dataframe into train/validation using
+     * {@link DataFrame#split(int,int,boolean,int)}</li>
+     * <li>iterate shuffled mini-batches using
+     * {@link DataFrame#iterateBatches(int,int)}</li>
+     * <li>perform forward/backpropagation and apply gradients via each
+     * {@link Layer}</li>
+     * <li>print validation loss/accuracy each epoch and support early stopping</li>
+     * </ul>
+     *
+     * @param df training dataframe (features must match model {@code inputSize})
+     * @return this fitted model
+     * @throws IllegalArgumentException if the dataframe is invalid or labels out of
+     *                                  range
+     * @throws IllegalStateException    if required layers have not been added
+     * @throws NullPointerException     if {@code df} is null
+     */
     @Override
     public MultiLayerPerceptron fit(DataFrame df)
             throws IllegalArgumentException, IllegalStateException, NullPointerException {
@@ -283,6 +415,15 @@ public class MultiLayerPerceptron implements Model {
         return this;
     }
 
+    /**
+     * Predict the output (raw scores) for a single example represented as an
+     * {@link ArrayList}.
+     *
+     * @param x feature vector as an ArrayList (size must equal {@code inputSize})
+     * @return list of length {@code outputSize} with raw output scores
+     * @throws IllegalStateException    if the model has not been fitted
+     * @throws IllegalArgumentException if the input length is incorrect
+     */
     public ArrayList<Double> predict(ArrayList<Double> x) throws IllegalArgumentException, IllegalStateException {
         if (!fitted) {
             throw new IllegalStateException("Model has not been fitted yet.");
@@ -306,6 +447,15 @@ public class MultiLayerPerceptron implements Model {
         return output;
     }
 
+    /**
+     * Predict the output (raw scores) for a single example represented as a
+     * primitive array.
+     *
+     * @param x feature vector (length must equal {@code inputSize})
+     * @return list of length {@code outputSize} with raw output scores
+     * @throws IllegalStateException    if the model has not been fitted
+     * @throws IllegalArgumentException if the input length is incorrect
+     */
     @Override
     public ArrayList<Double> predict(double[] x) throws IllegalArgumentException, IllegalStateException {
         if (!fitted) {
@@ -330,6 +480,16 @@ public class MultiLayerPerceptron implements Model {
         return output;
     }
 
+    /**
+     * Predict the output (raw scores) for a single example represented as a
+     * {@link SimpleMatrix}.
+     *
+     * @param xMatrix column vector with {@code inputSize} rows and 1 column
+     * @return column vector with {@code outputSize} rows and 1 column of raw output
+     *         scores
+     * @throws IllegalStateException    if the model has not been fitted
+     * @throws IllegalArgumentException if the matrix dimensions are incorrect
+     */
     public SimpleMatrix predict(SimpleMatrix xMatrix) throws IllegalArgumentException, IllegalStateException {
         if (!fitted) {
             throw new IllegalStateException("Model has not been fitted yet.");
@@ -352,6 +512,20 @@ public class MultiLayerPerceptron implements Model {
         return output;
     }
 
+    /**
+     * Compute classification accuracy of the model on a given {@link DataFrame}.
+     *
+     * <p>
+     * Accuracy is computed by taking the argmax of the raw outputs for each row and
+     * comparing it to the integer label in the dataframe.
+     * </p>
+     *
+     * @param df evaluation dataframe
+     * @return accuracy in [0.0, 1.0]
+     * @throws IllegalStateException    if the model has not been fitted
+     * @throws IllegalArgumentException if the dataframe is null, empty, or has
+     *                                  wrong feature count
+     */
     @Override
     public double score(DataFrame df)
             throws IllegalArgumentException, IllegalStateException, NullPointerException {
@@ -388,6 +562,12 @@ public class MultiLayerPerceptron implements Model {
         return (double) correct / df.size();
     }
 
+    /**
+     * Export the model (DTO JSON) to the given file path.
+     *
+     * @param path output path
+     * @return true on success, false on failure
+     */
     public boolean export(Path path) {
         System.out.println("Exporting model to " + path);
         try {
@@ -403,6 +583,13 @@ public class MultiLayerPerceptron implements Model {
         }
     }
 
+    /**
+     * Import a model from a JSON file produced by {@link #export(Path)}.
+     *
+     * @param path path to the JSON file
+     * @return new MultiLayerPerceptron constructed from DTO
+     * @throws Exception if reading/parsing fails
+     */
     public static MultiLayerPerceptron importModel(Path path) throws Exception {
         System.out.println("Importing model from " + path);
         String json = Files.readString(path, StandardCharsets.UTF_8);
@@ -412,6 +599,11 @@ public class MultiLayerPerceptron implements Model {
         return new MultiLayerPerceptron(dto);
     }
 
+    /**
+     * Convert the model to a serializable DTO.
+     *
+     * @return MLPModelDTO representing this model
+     */
     public MLPModelDTO toDTO() {
         MLPModelDTO dto = new MLPModelDTO();
         dto.inputSize = inputSize;
@@ -429,6 +621,11 @@ public class MultiLayerPerceptron implements Model {
         return dto;
     }
 
+    /**
+     * Return a JSON representation of the model DTO.
+     *
+     * @return JSON string
+     */
     @Override
     public String toString() {
         MLPModelDTO dto = toDTO();
