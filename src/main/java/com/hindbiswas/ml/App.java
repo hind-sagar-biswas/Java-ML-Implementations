@@ -8,7 +8,6 @@ import java.util.concurrent.ForkJoinPool;
 
 import com.hindbiswas.ml.data.BinaryDataLoader;
 import com.hindbiswas.ml.data.DataFrame;
-import com.hindbiswas.ml.data.Dataset;
 import com.hindbiswas.ml.data.MNISTDataLoader;
 import com.hindbiswas.ml.models.MultiLayerPerceptron;
 import com.hindbiswas.ml.models.Perceptron;
@@ -21,6 +20,10 @@ import com.opencsv.exceptions.CsvValidationException;
  *
  */
 public class App {
+    public static void main(String[] args) {
+        perceptron();
+    }
+
     public static void mlp() {
         try {
             String mlpPath = "/home/shinigami/Documents/image_mlp.json";
@@ -112,6 +115,20 @@ public class App {
 
         DataFrame train = data.get("train");
         DataFrame test = data.get("test");
+
+        System.out.println("================================");
+        System.out.println("Training Dataset");
+        System.out.println("--------------------------------");
+        System.out.println(train);
+        System.out.println("Shape: " + train.shape()[0] + "x" + train.shape()[1]);
+        System.out.println(train.summary());
+        System.out.println("================================");
+        System.out.println("Testing Dataset");
+        System.out.println("--------------------------------");
+        System.out.println(test);
+        System.out.println("Shape: " + test.shape()[0] + "x" + test.shape()[1]);
+        System.out.println(test.summary());
+        System.out.println("================================");
 
         Perceptron model = new Perceptron().shuffle(true).verbose(true);
 
