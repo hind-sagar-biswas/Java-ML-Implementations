@@ -268,6 +268,10 @@ public class DataFrame implements Cloneable, RandomAccess, Iterable<DataPoint> {
         return length;
     }
 
+    public int featureCount() {
+        return featureCount;
+    }
+
     public int[] dimensions() {
         return new int[] { length, featureCount + 1 };
     }
@@ -397,6 +401,69 @@ public class DataFrame implements Cloneable, RandomAccess, Iterable<DataPoint> {
             labelElementData[i] = labelElementData[j];
             labelElementData[j] = tempL;
         }
+    }
+
+    public DataFrame[] split(int a, int b) {
+        return split(a, b, false, 0);
+    }
+
+    public DataFrame[] split(int a, int b, boolean shuffle, int seed) {
+        if (a < 0 || b < 0) {
+            throw new IllegalArgumentException("Split ratios must be non-negative.");
+        }
+        if (a == 0 && b == 0) {
+            throw new IllegalArgumentException("At least one of a or b must be > 0.");
+        }
+
+        if (this.length == 0) {
+            DataFrame first = new DataFrame(featureCount, 1);
+            first.featureElementData = new double[0][featureCount];
+            first.labelElementData = new double[0];
+            first.length = 0;
+            first.capacity = 0;
+
+            DataFrame second = new DataFrame(featureCount, 1);
+            second.featureElementData = new double[0][featureCount];
+            second.labelElementData = new double[0];
+            second.length = 0;
+            second.capacity = 0;
+
+            return new DataFrame[] { first, second };
+        }
+
+        DataFrame source = this;
+        if (shuffle) {
+            source = this.deepCopy();
+            source.shuffle(seed);
+        }
+
+        long totalWeight = (long) a + (long) b;
+        int firstSize = (int) Math.floor((double) source.length * a / totalWeight);
+        firstSize = Math.max(0, Math.min(firstSize, source.length));
+        int secondSize = source.length - firstSize;
+
+        DataFrame first = new DataFrame(featureCount, Math.max(1, firstSize));
+        first.featureElementData = new double[firstSize][featureCount];
+        first.labelElementData = new double[firstSize];
+        for (int i = 0; i < firstSize; i++) {
+            System.arraycopy(source.featureElementData[i], 0, first.featureElementData[i], 0, featureCount);
+            first.labelElementData[i] = source.labelElementData[i];
+        }
+        first.length = firstSize;
+        first.capacity = firstSize;
+
+        DataFrame second = new DataFrame(featureCount, Math.max(1, secondSize));
+        second.featureElementData = new double[secondSize][featureCount];
+        second.labelElementData = new double[secondSize];
+        for (int i = 0; i < secondSize; i++) {
+            System.arraycopy(source.featureElementData[firstSize + i], 0, second.featureElementData[i], 0,
+                    featureCount);
+            second.labelElementData[i] = source.labelElementData[firstSize + i];
+        }
+        second.length = secondSize;
+        second.capacity = secondSize;
+
+        return new DataFrame[] { first, second };
     }
 
     public Iterable<DataFrame> iterateBatches(int batchSize) {

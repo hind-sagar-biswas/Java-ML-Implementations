@@ -54,6 +54,10 @@ public class Matrix {
         return new SimpleMatrix(dataArray.length, 1, true, dataArray);
     }
 
+    public static SimpleMatrix columnWithoutBias(double[] dataArray) {
+        return new SimpleMatrix(dataArray.length, 1, true, dataArray);
+    }
+
     public static SimpleMatrix random(int m, int n, long seed) {
         Random rand = new Random(seed);
         SimpleMatrix matrix = new SimpleMatrix(m, n);

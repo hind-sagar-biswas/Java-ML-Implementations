@@ -6,12 +6,15 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import org.ejml.simple.SimpleMatrix;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.hindbiswas.ml.data.DataFrame;
+import com.hindbiswas.ml.data.DataPoint;
 import com.hindbiswas.ml.data.MLPModelDTO;
 import com.hindbiswas.ml.util.LayerActivations;
 import com.hindbiswas.ml.util.LossFunctions;
@@ -149,12 +152,8 @@ public class MultiLayerPerceptron {
         return this;
     }
 
-    public MultiLayerPerceptron fit(ArrayList<ArrayList<Double>> dataX, ArrayList<Double> dataY)
-            throws IllegalArgumentException, IllegalStateException {
-        if (fitted) {
-            throw new IllegalStateException("Model has already been fitted.");
-        }
-
+    public MultiLayerPerceptron fit(DataFrame df)
+            throws IllegalArgumentException, IllegalStateException, NullPointerException {
         if (hiddenLayersAdded != layers.length) {
             throw new IllegalStateException(
                     "You must add all layers (hidden + output). Expected " + layers.length + " layers, but added "
@@ -165,39 +164,33 @@ public class MultiLayerPerceptron {
             throw new IllegalStateException("Model's output layer has not been added yet.");
         }
 
-        if (dataX == null || dataX.get(0).size() != inputSize) {
+        df = Objects.requireNonNull(df, "DataFrame is null.");
+        if (df.size() == 0) {
+            throw new IllegalArgumentException("DataFrame is empty.");
+        }
+        if (df.featureCount() != inputSize) {
             throw new IllegalArgumentException(
-                    String.format("Expected %d features, but got %d.", inputSize,
-                            (dataX == null ? 0 : dataX.get(0).size())));
+                    String.format("Expected %d features, but DataFrame has %d.", inputSize, df.featureCount()));
         }
 
-        if (dataY == null || dataY.size() != dataX.size()) {
-            throw new IllegalArgumentException(
-                    String.format("Expected %d labels, but got %d.", dataX.size(), (dataY == null ? 0 : dataY.size())));
-        }
+        final int n = df.size();
+        final int valSize = (int) (n * validationSplit);
+        Random topRng = new Random();
+        int baseSeed = topRng.nextInt();
 
-        final int n = dataX.size();
-
-        // Build and shuffle indices once, then split into validation and training sets
-        ArrayList<Integer> allIndices = new ArrayList<>();
-        for (int i = 0; i < n; i++)
-            allIndices.add(i);
-        Collections.shuffle(allIndices, new Random());
-
-        int valSize = (int) (n * validationSplit);
-        List<Integer> valIndices = allIndices.subList(0, valSize);
-        List<Integer> trainIndices = allIndices.subList(valSize, n);
+        DataFrame[] parts = df.split(valSize, n - valSize, true, baseSeed);
+        DataFrame valDF = parts[0];
+        DataFrame trainDF = parts[1];
 
         double bestValLoss = Double.POSITIVE_INFINITY;
         int patience = 5;
         int epochsWithoutImprovement = 0;
 
         for (int epoch = 0; epoch < epochs; epoch++) {
-            Collections.shuffle(trainIndices, new Random());
+            int epochSeed = baseSeed + epoch;
 
-            for (int start = 0; start < trainIndices.size(); start += batchSize) {
-                int end = Math.min(start + batchSize, trainIndices.size());
-                int currentBatchSize = end - start;
+            for (DataFrame batchDf : trainDF.iterateBatches(batchSize, epochSeed)) {
+                int currentBatchSize = batchDf.size();
 
                 SimpleMatrix[] accumGrads = new SimpleMatrix[layers.length];
                 for (int li = 0; li < layers.length; li++) {
@@ -205,14 +198,15 @@ public class MultiLayerPerceptron {
                 }
 
                 // accumulation
-                for (int j = start; j < end; j++) {
-                    int idx = trainIndices.get(j);
-
-                    SimpleMatrix x = Matrix.columnWithoutBias(dataX.get(idx));
+                for (DataPoint dp : batchDf) {
+                    SimpleMatrix x = Matrix.columnWithoutBias(dp.features);
                     SimpleMatrix y = new SimpleMatrix(outputSize, 1);
 
-                    double label = dataY.get(idx);
-                    y.set((int) label, 0, 1.0);
+                    int labelInt = (int) dp.label;
+                    if (labelInt < 0 || labelInt >= outputSize) {
+                        throw new IllegalArgumentException("Label out of [0, outputSize) range: " + labelInt);
+                    }
+                    y.set(labelInt, 0, 1.0);
 
                     for (Layer layer : layers)
                         x = layer.feedForward(x);
@@ -238,16 +232,16 @@ public class MultiLayerPerceptron {
                 }
             }
 
-            if (valIndices.size() > 0) {
+            if (valDF.size() > 0) {
                 double totalValLoss = 0.0;
                 int correct = 0;
-                for (int idx : valIndices) {
-                    SimpleMatrix x = Matrix.columnWithoutBias(dataX.get(idx));
+                for (DataPoint dp : valDF) {
+                    SimpleMatrix x = Matrix.columnWithoutBias(dp.features);
                     for (Layer layer : layers)
                         x = layer.feedForward(x);
 
                     SimpleMatrix y = new SimpleMatrix(outputSize, 1);
-                    y.set(dataY.get(idx).intValue(), 0, 1.0);
+                    y.set((int) dp.label, 0, 1.0);
 
                     totalValLoss += this.lossFunction.apply(x, y);
 
@@ -260,12 +254,13 @@ public class MultiLayerPerceptron {
                             predIdx = r;
                         }
                     }
-                    if (predIdx == dataY.get(idx).intValue())
+                    if (predIdx == (int) dp.label) {
                         correct++;
+                    }
                 }
 
-                double avgValLoss = totalValLoss / valIndices.size();
-                double valAcc = (double) correct / valIndices.size();
+                double avgValLoss = totalValLoss / valDF.size();
+                double valAcc = (double) correct / valDF.size();
 
                 System.out.printf("Epoch %d/%d — val_loss=%.6f val_acc=%.4f\n", epoch + 1, epochs, avgValLoss, valAcc);
 
@@ -312,6 +307,29 @@ public class MultiLayerPerceptron {
         return output;
     }
 
+    public ArrayList<Double> predict(double[] x) throws IllegalArgumentException, IllegalStateException {
+        if (!fitted) {
+            throw new IllegalStateException("Model has not been fitted yet.");
+        }
+
+        if (x == null || x.length != inputSize) {
+            throw new IllegalArgumentException(
+                    String.format("Expected %d features, but got %d.", inputSize, (x == null ? 0 : x.length)));
+        }
+
+        SimpleMatrix xMatrix = Matrix.columnWithoutBias(x);
+        for (Layer layer : layers) {
+            xMatrix = layer.feedForward(xMatrix);
+        }
+
+        ArrayList<Double> output = new ArrayList<>();
+        for (int i = 0; i < outputSize; i++) {
+            output.add(xMatrix.get(i, 0));
+        }
+
+        return output;
+    }
+
     public SimpleMatrix predict(SimpleMatrix xMatrix) throws IllegalArgumentException, IllegalStateException {
         if (!fitted) {
             throw new IllegalStateException("Model has not been fitted yet.");
@@ -334,25 +352,26 @@ public class MultiLayerPerceptron {
         return output;
     }
 
-    public double score(ArrayList<ArrayList<Double>> dataX, ArrayList<Double> dataY)
-            throws IllegalArgumentException, IllegalStateException {
+    public double score(DataFrame df)
+            throws IllegalArgumentException, IllegalStateException, NullPointerException {
         if (!fitted) {
             throw new IllegalStateException("Model has not been fitted yet.");
         }
-        if (dataX == null || dataX.get(0).size() != inputSize) {
-            throw new IllegalArgumentException(
-                    String.format("Expected %d features, but got %d.", inputSize,
-                            (dataX == null ? 0 : dataX.get(0).size())));
+
+        df = Objects.requireNonNull(df, "DataFrame is null.");
+        if (df.size() == 0) {
+            throw new IllegalArgumentException("DataFrame is empty.");
         }
-        if (dataY == null || dataY.size() != dataX.size()) {
+        if (df.featureCount() != inputSize) {
             throw new IllegalArgumentException(
-                    String.format("Expected %d labels, but got %d.", dataX.size(), (dataY == null ? 0 : dataY.size())));
+                    String.format("Expected %d features, but DataFrame has %d.", inputSize, df.featureCount()));
         }
+
         int correct = 0;
-        for (int i = 0; i < dataX.size(); i++) {
-            ArrayList<Double> x = dataX.get(i);
-            int actual = dataY.get(i).intValue();
-            ArrayList<Double> predicted = predict(x);
+        for (DataPoint dp : df) {
+            int actual = (int) dp.label;
+            ArrayList<Double> predicted = predict(dp.features);
+
             int predictedIdx = 0;
             double best = predicted.get(0);
             for (int j = 1; j < predicted.size(); j++) {
@@ -365,7 +384,7 @@ public class MultiLayerPerceptron {
                 correct++;
             }
         }
-        return (double) correct / dataX.size();
+        return (double) correct / df.size();
     }
 
     public boolean export(Path path) {

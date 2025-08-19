@@ -2,6 +2,7 @@ package com.hindbiswas.ml.models;
 
 import org.junit.jupiter.api.Test;
 
+import com.hindbiswas.ml.data.DataFrame;
 import com.hindbiswas.ml.util.LayerActivations;
 import com.hindbiswas.ml.util.LossGradients;
 import com.hindbiswas.ml.util.Matrix;
@@ -61,8 +62,11 @@ public class MultiLayerPerceptronTest {
             Y.add((double) label);
         }
 
+        DataFrame df = new DataFrame(X.get(0).size());
+        df.add(X, Y);
+
         // Fit the model (this should set fitted = true)
-        mlp.fit(X, Y);
+        mlp.fit(df);
 
         // Evaluate accuracy on the same dataset (small unit test, so reuse training
         // set)
