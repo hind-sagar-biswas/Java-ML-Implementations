@@ -39,16 +39,6 @@ public class LogisticRegression {
     }
 
     /**
-     * Computes the sigmoid activation function.
-     *
-     * @param z raw input value
-     * @return sigmoid(z) in range (0,1)
-     */
-    private double sigmoid(double z) {
-        return 1.0 / (1.0 + Math.exp(-z));
-    }
-
-    /**
      * Trains the logistic regression model on the provided dataset.
      *
      * @param dataX list of feature vectors (each inner list is one example)
@@ -161,5 +151,15 @@ public class LogisticRegression {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    /**
+     * Computes the sigmoid activation function.
+     *
+     * @param z raw input value
+     * @return sigmoid(z) in range (0,1)
+     */
+    private double sigmoid(double z) {
+        return 1.0 / (1.0 + Math.exp(-z));
     }
 }
