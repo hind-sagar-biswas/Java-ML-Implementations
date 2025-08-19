@@ -21,8 +21,8 @@ A lightweight Java library implementing common Machine Learning models using cor
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/javaml.git
-   cd javaml
+   git clone https://github.com/hind-sagar-biswas/Java-ML-Implementations
+   cd "Java-ML-Implementations"
    ```
 
 2. **Build with Maven**
