@@ -19,7 +19,7 @@ public class DataFrame implements Cloneable, RandomAccess, Iterable<DataPoint> {
     private double[][] featureElementData;
     private double[] labelElementData;
 
-    private final int featureCount;
+    private int featureCount;
     private int capacity;
     private int length;
 
@@ -224,6 +224,24 @@ public class DataFrame implements Cloneable, RandomAccess, Iterable<DataPoint> {
         }
         length += shape[0];
 
+        return this;
+    }
+
+    public DataFrame drop(int index) {
+        if (index < 0) {
+            index = featureCount + index;
+        }
+        if (index < 0 || index >= featureCount) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        double[][] newFeatures = new double[capacity][featureCount - 1];
+        for (int i = 0; i < length; i++) {
+            System.arraycopy(featureElementData[i], 0, newFeatures[i], 0, index);
+            System.arraycopy(featureElementData[i], index + 1, newFeatures[i], index, featureCount - index - 1);
+        }
+        featureElementData = newFeatures;
+        featureCount--;
         return this;
     }
 
