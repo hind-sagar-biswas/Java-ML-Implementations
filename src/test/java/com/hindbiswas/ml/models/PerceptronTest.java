@@ -30,7 +30,7 @@ public class PerceptronTest {
     public void testUnfittedToString() {
         // toString should indicate unfitted model before training
         Perceptron p = new Perceptron();
-        assertEquals("Perceptron (unfitted)", p.toString());
+        assertThrows(IllegalStateException.class, () -> p.toString());
     }
 
     @Test

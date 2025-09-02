@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import com.hindbiswas.ml.data.DataFrame;
 import com.hindbiswas.ml.data.DataPoint;
+import com.hindbiswas.ml.util.ModelIO;
 
 /**
  * NaiveBayes
@@ -146,17 +147,6 @@ abstract public class NaiveBayes implements Model {
      * @return true on success, false on failure
      */
     public boolean export(Path path) {
-        System.out.println("Exporting model to " + path);
-        try {
-            String json = toString();
-            Files.write(path, json.getBytes(StandardCharsets.UTF_8));
-            System.out.println("Model exported to " + path);
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Failed to export model to " + path + ": " + e.getMessage());
-            System.err.println("Model: " + toString());
-            return false;
-        }
+        return ModelIO.export(path, this);
     }
 }

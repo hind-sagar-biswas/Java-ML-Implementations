@@ -18,6 +18,7 @@ import com.hindbiswas.ml.util.LayerActivations;
 import com.hindbiswas.ml.util.LossFunctions;
 import com.hindbiswas.ml.util.LossGradients;
 import com.hindbiswas.ml.util.Matrix;
+import com.hindbiswas.ml.util.ModelIO;
 
 /**
  * MultiLayerPerceptron
@@ -569,18 +570,7 @@ public class MultiLayerPerceptron implements Model {
      * @return true on success, false on failure
      */
     public boolean export(Path path) {
-        System.out.println("Exporting model to " + path);
-        try {
-            String json = toString();
-            Files.write(path, json.getBytes(StandardCharsets.UTF_8));
-            System.out.println("Model exported to " + path);
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Failed to export model to " + path + ": " + e.getMessage());
-            System.err.println("Model: " + toString());
-            return false;
-        }
+        return ModelIO.export(path, this);
     }
 
     /**
@@ -591,12 +581,7 @@ public class MultiLayerPerceptron implements Model {
      * @throws Exception if reading/parsing fails
      */
     public static MultiLayerPerceptron importModel(Path path) throws Exception {
-        System.out.println("Importing model from " + path);
-        String json = Files.readString(path, StandardCharsets.UTF_8);
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        MLPModelDTO dto = gson.fromJson(json, MLPModelDTO.class);
-        System.out.println("Model imported from " + path);
-        return new MultiLayerPerceptron(dto);
+        return ModelIO.importModel(path, MLPModelDTO.class, MultiLayerPerceptron.class);
     }
 
     /**

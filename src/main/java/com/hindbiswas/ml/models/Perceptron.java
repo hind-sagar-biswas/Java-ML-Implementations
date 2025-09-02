@@ -22,6 +22,7 @@ import com.hindbiswas.ml.data.DataFrame;
 import com.hindbiswas.ml.data.DataPoint;
 import com.hindbiswas.ml.dto.PerceptronDTO;
 import com.hindbiswas.ml.util.Matrix;
+import com.hindbiswas.ml.util.ModelIO;
 
 /**
  * Implements the classic perceptron algorithm for linearly separable data.
@@ -325,18 +326,7 @@ public class Perceptron implements Model {
      */
     @Override
     public boolean export(Path path) {
-        System.out.println("Exporting model to " + path);
-        try {
-            String json = toString();
-            Files.write(path, json.getBytes(StandardCharsets.UTF_8));
-            System.out.println("Model exported to " + path);
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Failed to export model to " + path + ": " + e.getMessage());
-            System.err.println("Model: " + toString());
-            return false;
-        }
+        return ModelIO.export(path, this);
     }
 
     /**
@@ -347,12 +337,7 @@ public class Perceptron implements Model {
      * @throws Exception if reading/parsing fails
      */
     public static Perceptron importModel(Path path) throws Exception {
-        System.out.println("Importing model from " + path);
-        String json = Files.readString(path, StandardCharsets.UTF_8);
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        PerceptronDTO dto = gson.fromJson(json, PerceptronDTO.class);
-        System.out.println("Model imported from " + path);
-        return new Perceptron(dto);
+        return ModelIO.importModel(path, PerceptronDTO.class, Perceptron.class);
     }
 
     /**
