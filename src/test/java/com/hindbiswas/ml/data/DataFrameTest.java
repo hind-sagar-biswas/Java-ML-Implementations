@@ -1,10 +1,7 @@
-package com.hindbiswas.ml.models;
+package com.hindbiswas.ml.data;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import com.hindbiswas.ml.data.DataFrame;
-import com.hindbiswas.ml.data.DataPoint;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -10,6 +10,7 @@ A lightweight Java library implementing common Machine Learning models using cor
 * **Logistic Regression (Gradient Descent)** (`LogisticRegression`)
 * **Perceptron** (`Perceptron`)
 * **Multi Layer Perceptron** (`MultiLayerPerceptron`)
+* **Gaussian Naive Bayes** (`GaussianNB`)
 
 ## Data Structures
 
