@@ -1,7 +1,5 @@
 package com.hindbiswas.ml.models;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Objects;

@@ -1,15 +1,12 @@
 package com.hindbiswas.ml.models;
 
 import java.util.Map;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Objects;
 
 import com.hindbiswas.ml.data.DataFrame;
 import com.hindbiswas.ml.data.DataPoint;
-import com.hindbiswas.ml.util.ModelIO;
 
 /**
  * NaiveBayes
@@ -95,6 +92,14 @@ abstract public class NaiveBayes implements Model {
     }
 
     /**
+     * Export the model (DTO JSON) to the given file path.
+     *
+     * @param path output path
+     * @return true on success, false on failure
+     */
+    abstract public boolean export(Path path);
+
+    /**
      * Set the class mapping from the given labels.
      * 
      * @param labels training labels
@@ -138,15 +143,5 @@ abstract public class NaiveBayes implements Model {
         }
 
         return out;
-    }
-
-    /**
-     * Export the model (DTO JSON) to the given file path.
-     *
-     * @param path output path
-     * @return true on success, false on failure
-     */
-    public boolean export(Path path) {
-        return ModelIO.export(path, this);
     }
 }
