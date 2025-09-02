@@ -13,7 +13,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.hindbiswas.ml.data.DataFrame;
 import com.hindbiswas.ml.data.DataPoint;
-import com.hindbiswas.ml.data.MLPModelDTO;
+import com.hindbiswas.ml.dto.MLPModelDTO;
 import com.hindbiswas.ml.util.LayerActivations;
 import com.hindbiswas.ml.util.LossFunctions;
 import com.hindbiswas.ml.util.LossGradients;

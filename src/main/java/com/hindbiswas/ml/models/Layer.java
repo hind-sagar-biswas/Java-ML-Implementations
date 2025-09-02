@@ -2,7 +2,7 @@ package com.hindbiswas.ml.models;
 
 import org.ejml.simple.SimpleMatrix;
 
-import com.hindbiswas.ml.data.LayerDTO;
+import com.hindbiswas.ml.dto.LayerDTO;
 import com.hindbiswas.ml.util.LayerActivations;
 import com.hindbiswas.ml.util.Matrix;
 

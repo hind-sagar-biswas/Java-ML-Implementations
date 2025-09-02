@@ -1,4 +1,4 @@
-package com.hindbiswas.ml.data;
+package com.hindbiswas.ml.dto;
 
 import java.util.ArrayList;
 
