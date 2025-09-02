@@ -6,16 +6,21 @@
  */
 package com.hindbiswas.ml.models;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.Random;
 
 import org.ejml.simple.SimpleMatrix;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.hindbiswas.ml.data.DataFrame;
 import com.hindbiswas.ml.data.DataPoint;
+import com.hindbiswas.ml.dto.PerceptronDTO;
 import com.hindbiswas.ml.util.Matrix;
 
 /**
@@ -44,6 +49,20 @@ public class Perceptron implements Model {
      * Default constructor with default hyperparameters.
      */
     public Perceptron() {
+    }
+
+    private Perceptron(PerceptronDTO dto) {
+        this.learningRate = dto.learningRate;
+        this.iterations = dto.iterations;
+        this.threshold = dto.threshold;
+        this.shuffle = dto.shuffle;
+        this.verbose = dto.verbose;
+        this.weightSeed = dto.weightSeed;
+
+        this.theta = new SimpleMatrix(dto.theta.length, 1);
+        for (int i = 0; i < dto.theta.length; i++) {
+            theta.set(i, 0, dto.theta[i] ? 1 : -1);
+        }
     }
 
     /**
@@ -293,27 +312,72 @@ public class Perceptron implements Model {
      */
     @Override
     public String toString() {
+        PerceptronDTO dto = toDTO();
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        return gson.toJson(dto);
+    }
+
+    /**
+     * Export the model (DTO JSON) to the given file path.
+     *
+     * @param path output path
+     * @return true on success, false on failure
+     */
+    @Override
+    public boolean export(Path path) {
+        System.out.println("Exporting model to " + path);
+        try {
+            String json = toString();
+            Files.write(path, json.getBytes(StandardCharsets.UTF_8));
+            System.out.println("Model exported to " + path);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Failed to export model to " + path + ": " + e.getMessage());
+            System.err.println("Model: " + toString());
+            return false;
+        }
+    }
+
+    /**
+     * Import a model from a JSON file produced by {@link #export(Path)}.
+     *
+     * @param path path to the JSON file
+     * @return new Perceptron constructed from DTO
+     * @throws Exception if reading/parsing fails
+     */
+    public static Perceptron importModel(Path path) throws Exception {
+        System.out.println("Importing model from " + path);
+        String json = Files.readString(path, StandardCharsets.UTF_8);
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        PerceptronDTO dto = gson.fromJson(json, PerceptronDTO.class);
+        System.out.println("Model imported from " + path);
+        return new Perceptron(dto);
+    }
+
+    /**
+     * Convert the model to a serializable DTO.
+     *
+     * @return PerceptronDTO representing this model
+     */
+    @Override
+    public PerceptronDTO toDTO() {
         if (theta == null) {
-            return "Perceptron (unfitted)";
+            throw new IllegalStateException("Model has not been fitted yet.");
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("Perceptron(")
-                .append("α=").append(learningRate)
-                .append(", iter=").append(iterations)
-                .append(", thresh=").append(threshold)
-                .append(", shuffle=").append(shuffle)
-                .append(", verbose=").append(verbose)
-                .append(") weights=[");
+        PerceptronDTO dto = new PerceptronDTO();
+        dto.learningRate = learningRate;
+        dto.iterations = iterations;
+        dto.threshold = threshold;
+        dto.shuffle = shuffle;
+        dto.verbose = verbose;
+        dto.weightSeed = weightSeed;
 
+        dto.theta = new boolean[theta.getNumRows()];
         for (int i = 0; i < theta.getNumRows(); i++) {
-            sb.append(String.format("%.4f", theta.get(i, 0)));
-            if (i < theta.getNumRows() - 1) {
-                sb.append(", ");
-            }
+            dto.theta[i] = theta.get(i, 0) > 0;
         }
-        sb.append("]");
-
-        return sb.toString();
+        return dto;
     }
 }
