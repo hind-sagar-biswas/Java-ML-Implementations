@@ -604,6 +604,7 @@ public class MultiLayerPerceptron implements Model {
      *
      * @return MLPModelDTO representing this model
      */
+    @Override
     public MLPModelDTO toDTO() {
         MLPModelDTO dto = new MLPModelDTO();
         dto.inputSize = inputSize;

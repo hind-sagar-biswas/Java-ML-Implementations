@@ -3,11 +3,13 @@ package com.hindbiswas.ml.data;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Random;
 import java.util.RandomAccess;
+import java.util.Set;
 
 /**
  * Data
@@ -672,6 +674,20 @@ public class DataFrame implements Cloneable, RandomAccess, Iterable<DataPoint> {
         }
         out.length = actual;
         out.capacity = actual;
+        return out;
+    }
+
+    public double[] getUniqueLabels() {
+        Set<Double> labels = new HashSet<>();
+        for (int i = 0; i < this.length; i++) {
+            labels.add(this.labelElementData[i]);
+        }
+        double[] out = new double[labels.size()];
+        int idx = 0;
+        for (Double label : labels) {
+            out[idx] = label;
+            idx++;
+        }
         return out;
     }
 

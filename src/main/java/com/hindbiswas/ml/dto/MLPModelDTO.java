@@ -5,7 +5,7 @@ import java.util.ArrayList;
 /**
  * MLPModelDTO
  */
-public class MLPModelDTO {
+public class MLPModelDTO extends DTO {
 
     public int inputSize;
     public int hiddenLayers;
