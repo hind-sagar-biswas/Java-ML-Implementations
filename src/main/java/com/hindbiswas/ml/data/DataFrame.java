@@ -262,10 +262,10 @@ public class DataFrame implements Cloneable, RandomAccess, Iterable<DataPoint> {
                 System.arraycopy(featureElementData[i + 1], 0, featureElementData[i], 0, featureCount);
             }
         }
-        for (int j = 0; j < featureCount; j++) {
-            featureElementData[length - 1][j] = 0.0;
-        }
-        labelElementData[length - 1] = 0.0;
+        //for (int j = 0; j < featureCount; j++) {
+        //    featureElementData[length - 1][j] = 0.0;
+        //}
+        //labelElementData[length - 1] = 0.0;
         length--;
         return removedLabel;
     }

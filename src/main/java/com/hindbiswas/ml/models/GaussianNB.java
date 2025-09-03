@@ -33,12 +33,11 @@ public class GaussianNB extends NaiveBayes {
     private static final double VAR_EPS = 1e-9;
     private double[][] means;
     private double[][] variances;
-    private final Random rng = new Random();
 
     public GaussianNB() {
     }
 
-    private GaussianNB(GaussianNBDTO dto) {
+    public GaussianNB(GaussianNBDTO dto) {
         this.alpha = dto.alpha;
         this.classes = dto.classes;
         this.features = dto.features;
@@ -119,22 +118,8 @@ public class GaussianNB extends NaiveBayes {
             probs[c] = logClassPriors[c] + logLikelihood;
         }
 
-        // Find max & ties
-        double max = Double.NEGATIVE_INFINITY;
-        ArrayList<Integer> maxIndices = new ArrayList<>();
-        double tol = 1e-12;
-        for (int i = 0; i < probs.length; i++) {
-            if (probs[i] > max + tol) {
-                max = probs[i];
-                maxIndices.clear();
-                maxIndices.add(i);
-            } else if (Math.abs(probs[i] - max) <= tol) {
-                maxIndices.add(i);
-            }
-        }
+        return this.pickMax(probs);
 
-        int pickIndex = maxIndices.get(rng.nextInt(maxIndices.size()));
-        return classes[pickIndex];
     }
 
     /**

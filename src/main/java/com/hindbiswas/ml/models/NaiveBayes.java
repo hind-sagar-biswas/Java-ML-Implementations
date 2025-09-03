@@ -2,8 +2,10 @@ package com.hindbiswas.ml.models;
 
 import java.util.Map;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.Random;
 
 import com.hindbiswas.ml.data.DataFrame;
 import com.hindbiswas.ml.data.DataPoint;
@@ -18,6 +20,7 @@ abstract public class NaiveBayes implements Model {
     protected double[] classes;
     protected Map<Double, Integer> classIndices = new HashMap<>();
     protected double[] logClassPriors;
+    private final Random rng = new Random();
 
     /**
      * Set the alpha parameter.
@@ -84,7 +87,7 @@ abstract public class NaiveBayes implements Model {
             int actual = (int) dp.label;
             Double predicted = predict(dp.features);
 
-            if (classIndices.get(predicted) == actual) {
+            if (predicted == actual) {
                 correct++;
             }
         }
@@ -136,12 +139,30 @@ abstract public class NaiveBayes implements Model {
             classCounts[idx]++;
         }
 
-        double alpha = 1e-9;
         double denom = labels.length + alpha * classes.length;
         for (int i = 0; i < classes.length; i++) {
             out[i] = Math.log((classCounts[i] + alpha) / denom);
         }
 
         return out;
+    }
+
+    protected double pickMax(double[] probs) {
+        // Find max & ties
+        double max = Double.NEGATIVE_INFINITY;
+        ArrayList<Integer> maxIndices = new ArrayList<>();
+        double tol = 1e-12;
+        for (int i = 0; i < probs.length; i++) {
+            if (probs[i] > max + tol) {
+                max = probs[i];
+                maxIndices.clear();
+                maxIndices.add(i);
+            } else if (Math.abs(probs[i] - max) <= tol) {
+                maxIndices.add(i);
+            }
+        }
+
+        int pickIndex = maxIndices.get(rng.nextInt(maxIndices.size()));
+        return classes[pickIndex];
     }
 }

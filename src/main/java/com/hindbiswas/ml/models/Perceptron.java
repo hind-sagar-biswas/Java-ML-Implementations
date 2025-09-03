@@ -50,7 +50,7 @@ public class Perceptron implements Model {
     public Perceptron() {
     }
 
-    private Perceptron(PerceptronDTO dto) {
+    public Perceptron(PerceptronDTO dto) {
         this.learningRate = dto.learningRate;
         this.iterations = dto.iterations;
         this.threshold = dto.threshold;
