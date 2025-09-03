@@ -11,6 +11,7 @@ A lightweight Java library implementing common Machine Learning models using cor
 * **Perceptron** (`Perceptron`)
 * **Multi Layer Perceptron** (`MultiLayerPerceptron`)
 * **Gaussian Naive Bayes** (`GaussianNB`)
+* **Multinomial Naive Bayes** (`MultinomialNB`)
 
 ## Data Structures
 
