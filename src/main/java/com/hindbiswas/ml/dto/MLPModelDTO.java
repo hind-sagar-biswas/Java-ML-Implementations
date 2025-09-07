@@ -20,6 +20,4 @@ public class MLPModelDTO extends DTO {
     public String lossFunctionName;
 
     public ArrayList<LayerDTO> layers = new ArrayList<>();
-    public String libraryVersion = "1.0";
-    public String schemaVersion = "1";
 }
