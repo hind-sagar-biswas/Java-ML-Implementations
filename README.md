@@ -23,8 +23,8 @@ JavaML is a lightweight Java library implementing common machine learning models
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/hind-sagar-biswas/Java-ML-Implementations
-   cd "Java-ML-Implementations"
+   git clone https://github.com/hind-sagar-biswas/JavaML
+   cd "JavaML"
    ```
 
 2. **Build with Maven**
@@ -66,8 +66,11 @@ System.out.println("Test accuracy: " + acc);
 ## Author
 
 Hind Biswas  
+
 GitHub: https://github.com/hind-sagar-biswas  
+
 Portfolio: https://hindbiswas.com  
+
 Email: me@hindbiswas.com
 
 ---
