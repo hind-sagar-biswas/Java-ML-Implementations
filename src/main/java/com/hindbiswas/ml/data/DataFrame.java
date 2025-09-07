@@ -12,7 +12,8 @@ import java.util.RandomAccess;
 import java.util.Set;
 
 /**
- * Data
+ * DataFrame is a 2D structure for storing features and labels for machine learning datasets.
+ * Supports efficient row-wise operations and implements {@link Iterable} for DataPoint iteration.
  */
 public class DataFrame implements Cloneable, RandomAccess, Iterable<DataPoint> {
     private static final int DEFAULT_CAPACITY = 10;

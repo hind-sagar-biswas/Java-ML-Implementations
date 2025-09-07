@@ -1,8 +1,9 @@
 package com.hindbiswas.ml.dto;
 
 /**
- * MultinomialNBDTO
+ * DTO for Multinomial Naive Bayes model parameters.
  */
 public class MultinomialNBDTO extends NaiveBayesDTO {
+    /** Log probabilities of features per class. */
     public double[][] featureLogProb;
 }
