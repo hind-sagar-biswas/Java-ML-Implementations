@@ -1,6 +1,6 @@
 # JavaML Library
 
-A lightweight Java library implementing common Machine Learning models using core algorithms and the EJML library for matrix operations.
+JavaML is a lightweight Java library implementing common machine learning models and utilities using core algorithms and the EJML library for matrix operations.
 
 ## Models
 
@@ -33,12 +33,44 @@ A lightweight Java library implementing common Machine Learning models using cor
    mvn clean install
    ```
 
+---
+
+## Example Usage
+
+```java
+// Example: Train and evaluate a Perceptron
+DataFrame train = ...; // Load or create training data
+DataFrame test = ...;  // Load or create test data
+
+Perceptron model = new Perceptron(0.01, 1000, 0.0)
+    .shuffle(true)
+    .verbose(true)
+    .randomizeWeights(42);
+
+model.fit(train);
+double acc = model.score(test);
+System.out.println("Test accuracy: " + acc);
+```
+
+---
+
 ## Contributing
 
 1. Fork the repository
 2. Create a new branch (`git checkout -b feature/xyz`)
 3. Commit your changes
 4. Submit a Pull Request
+
+---
+
+## Author
+
+Hind Biswas  
+GitHub: https://github.com/hind-sagar-biswas  
+Portfolio: https://hindbiswas.com  
+Email: me@hindbiswas.com
+
+---
 
 ## License
 
