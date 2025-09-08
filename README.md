@@ -12,6 +12,7 @@ JavaML is a lightweight Java library implementing common machine learning models
 * **Multi Layer Perceptron** (`MultiLayerPerceptron`)
 * **Gaussian Naive Bayes** (`GaussianNB`)
 * **Multinomial Naive Bayes** (`MultinomialNB`)
+* **Bernoulli Naive Bayes** (`BernoulliNB`)
 
 ## Data Structures
 
